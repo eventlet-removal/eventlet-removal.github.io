@@ -1,0 +1,87 @@
+
+**Instructions for Analysis:**
+
+Please analyze the use of Eventlet in the project **{{project_name}}**. The goal is to classify the occurrences of Eventlet usage according to the following patterns and use cases:
+
+1. **Green Threads and GreenPool**
+2. **Use of `eventlet.wsgi`**
+3. **Deferred Tasks and Scheduling**
+4. **Use in Tests with `mock`**
+5. **Presence in Configuration Files and Dependencies**
+6. **References in Documentation**
+
+**Your analysis should follow the structure below:**
+
+- **Project:** [Project Name]
+  - **Is Eventlet globally deactivable for this project:** [Yes/No/Maybe]
+    - *If you are unsure whether Eventlet can be globally deactivated, indicate "Maybe" and provide the reason for your doubt.*
+    - *Note: The presence of an Eventlet-specific argparse option may indicate that Eventlet is deactivable.*
+  - **Estimated complexity of the migration:** [1 to 10]
+    - *Define what this level of complexity represents.*
+    - *Explain the factors on which you based this complexity estimation.*
+  - **Files Analyzed:**
+    - **File:** [File Name]
+      - **Identified Patterns:**
+        - **Pattern 1:** [Title of the pattern]
+          - **Description:** [Brief description and justification]
+        - **Pattern 2:** [Title of the pattern]
+          - **Description:** [Brief description and justification]
+        - *Continue listing patterns identified in this file, each with its own description.*
+    - **File:** [Next File Name]
+      - **Identified Patterns:**
+        - **Pattern 1:** [Title of the pattern]
+          - **Description:** [Brief description and justification]
+        - *Continue as above for each pattern in this file.*
+    - *Proceed similarly for each relevant file.*
+
+- **Overall Conclusion:**
+  - **Summary of Key Points:** [Summarize the main observations.]
+  - **Potential Challenges:** [List challenges anticipated during migration.]
+  - **Recommendations:** [Advice on how to approach the migration.]
+
+**Additional Guidelines:**
+
+- **Language:** Provide your analysis **in English**.
+- **Avoid Placeholder Texts:** Do not include any placeholder texts like "(Repeat for each relevant file)" in your final analysis.
+- **Clarify the Levels of Complexity:** Define what each level represents on the 1 to 10 scale to standardize the estimation. For example:
+  - **1-3:** Simple migration with minimal code changes.
+  - **4-7:** Moderate migration requiring significant code refactoring.
+  - **8-10:** Complex migration involving extensive changes across the codebase.
+- **Improve the Format of the Analysis:**
+  - Structure your analysis thoroughly by using subsections for each identified pattern within a file.
+  - Provide separate descriptions and justifications for each pattern.
+- **Include an Overall Conclusion:**
+  - Summarize your findings in a conclusion section.
+  - Highlight the main points, potential challenges, and provide actionable recommendations for the migration.
+
+**Example of the expected format:**
+
+---
+
+- **Project:** OpenStack Watcher
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    - *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 7
+    - *This level represents a moderate migration requiring significant code refactoring.*
+    - *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
+  - **Files Analyzed:**
+    - **File:** `watcher/applier/workflow_engine/base.py`
+      - **Identified Patterns:**
+        - **Pattern:** Green Threads and GreenPool
+          - **Description:** This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the workflow engine.
+    - **File:** `watcher/common/service.py`
+      - **Identified Patterns:**
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          - **Description:** The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+    - **File:** `watcher/tests/applier/workflow_engine/test_taskflow_action_container.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          - **Description:** This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+    - **File:** `watcher/common/utils.py`
+      - **Identified Patterns:**
+        - **Pattern:** Deferred Tasks and Scheduling
+          - **Description:** Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
