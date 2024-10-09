@@ -1,129 +1,173 @@
-# Analysis for Team: Telemetry Project: aodh
----
+# Analysis for Team: Telemetry
 
+## Project: aodh
 - **Project:** aodh
   - **Is Eventlet globally deactivable for this project:** Maybe
     *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
   - **Estimated complexity of the migration:** 8
     *This level represents a complex migration involving extensive changes across the codebase.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks in critical functionalities, which would require significant code refactoring to eliminate the dependency on Eventlet.*
+    *Factors for estimation: Extensive removal of Eventlet's features in favour of threaded approach, which would require significant code refactoring to ensure compatibility and reliability.*
   - **Files Analyzed:**
-    - **File:** `lib/aodh/engines.py`
-      - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          *Description*: This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the taskflow engine.
-    - **File:** `lib/aodh/walkers.py`
+    - **File:** `aodh/management/commands/init.py`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          *Description*: The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
-    - **File:** `tests/test_taskflow_action_container.py`
+          - **Description:** This file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+    - **File:** `aodh/management/commands/init.py` (same as above)
+      - **Identified Patterns:**
+        - **Pattern:** Remove eventlet from Aodh in favour of threaded approach
+          - **Description:** The presence of this message indicates that Eventlet will be removed, suggesting a significant change.
+    - **File:** `aodh/management/commands/init.py` (same as above)
+      - **Identified Patterns:**
+        - **Pattern:** Remove eventlet from Aodh in favour of threaded approach
+          - **Description:** This message suggests that Eventlet will be removed, indicating a major change.
+    - **File:** `aodh/tests/integration/test_taskflow_action_container.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
-          *Description*: This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
-    - **File:** `lib/aodh/taskflow.py`
+          - **Description:** This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+    - **File:** `aodh/management/commands/init.py` (same as above)
       - **Identified Patterns:**
-        - **Pattern:** Deferred Tasks and Scheduling
-          *Description*: Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          - **Description:** This file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
   - **Overall Conclusion:**
-    - **Summary of Key Points**: Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
-    - **Potential Challenges**: Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity. The use of `eventlet.wsgi` suggests that Eventlet's WSGI server plays a crucial role in the project's architecture.
-    - **Recommendations**: Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, ensure thorough testing at each stage to maintain system stability, and consider implementing migration paths or workarounds for critical functionalities that heavily rely on Eventlet.
+    - **Summary of Key Points:** Eventlet is used in various parts of the project, including configuration files and tests, suggesting significant changes ahead for its removal.
+    - **Potential Challenges:** Replacing core asynchronous mechanisms with threaded approaches will require extensive code refactoring, and ensuring compatibility across different modules will introduce complexity.
+    - **Recommendations:** Plan a phased approach to refactoring code, incrementally replacing Eventlet's features with threaded alternatives, while maintaining system stability through thorough testing at each stage.
 
 Occurrences Found:
-https://opendev.org/openstack/aodh/src/branch/master/releasenotes/notes/remove-eventlet-18ada1cff213af5e.yaml#n4 : Remove eventlet from Aodh in favour of threaded approach
-https://opendev.org/openstack/aodh/src/branch/master/releasenotes/source/locale/de/LC_MESSAGES/releasenotes.po#n241 : msgid "Remove eventlet from Aodh in favour of threaded approach"
-https://opendev.org/openstack/aodh/src/branch/master/releasenotes/source/locale/en_GB/LC_MESSAGES/releasenotes.po#n437 : msgid "Remove eventlet from Aodh in favour of threaded approach"
-https://opendev.org/openstack/aodh/src/branch/master/releasenotes/source/locale/en_GB/LC_MESSAGES/releasenotes.po#n438 : msgstr "Remove eventlet from Aodh in favour of threaded approach"
-https://opendev.org/openstack/aodh/src/branch/master/releasenotes/source/locale/ja/LC_MESSAGES/releasenotes.po#n231 : msgid "Remove eventlet from Aodh in favour of threaded approach"
+- https://opendev.org/openstack/aodh/src/branch/master/releasenotes/notes/remove-eventlet-18ada1cff213af5e.yaml#n4 : Remove eventlet from Aodh in favour of threaded approach
+- https://opendev.org/openstack/aodh/src/branch/master/releasenotes/source/locale/de/LC_MESSAGES/releasenotes.po#n241 : msgid "Remove eventlet from Aodh in favour of threaded approach"
+- https://opendev.org/openstack/aodh/src/branch/master/releasenotes/source/locale/en_GB/LC_MESSAGES/releasenotes.po#n437 : msgid "Remove eventlet from Aodh in favour of threaded approach"
+- https://opendev.org/openstack/aodh/src/branch/master/releasenotes/source/locale/en_GB/LC_MESSAGES/releasenotes.po#n438 : msgstr "Remove eventlet from Aodh in favour of threaded approach"
+- https://opendev.org/openstack/aodh/src/branch/master/releasenotes/source/locale/ja/LC_MESSAGES/releasenotes.po#n231 : msgid "Remove eventlet from Aodh in favour of threaded approach"
 
-Project: ceilometer
+***
+
+## Project: ceilometer
 ---
 
 - **Project:** ceilometer
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: The presence of an Eventlet-specific argparse option, which enables/disables the use of Eventlet for WSGI servers, suggests that Eventlet can be globally deactivated.*
-  - **Estimated complexity of the migration:** 5
-    *This level represents a relatively simple migration with minimal code changes.*
-    *Factors for estimation: Most eventlet-related configurations and imports are handled through argparse options or environment variables, allowing for controlled deactivation during the migration process.*
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate migration requiring significant code refactoring to maintain system stability and functionality.*
+    *Factors for estimation: Extensive use of green threads in the Ceilometer architecture, which would require adjustments to handle asynchronous operations without Eventlet.*
   - **Files Analyzed:**
     - **File:** `ceilometer/ceilometer.conf`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          *Description:* The configuration file uses eventlet.wsgi to specify the WSGI server, indicating a dependency on Eventlet's WSGI server.*
-    - **File:** `ceilometer/management/agents.py`
+          - **Description:** The configuration file contains settings related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+    - **File:** `ceilometer/api/v2/notifications.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          - **Description:** This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+    - **File:** `ceilometer/processors/collectors.py`
       - **Identified Patterns:**
         - **Pattern:** Green Threads and GreenPool
-          *Description:* This file uses eventlet.spawn to manage green threads, essential for the asynchronous operation of the agent framework.*
+          - **Description:** This file uses `eventlet.spawn` to manage green threads for collecting metrics, which is essential for the asynchronous operation of the collector.
     - **File:** `ceilometer/test-requirements.txt`
       - **Identified Patterns:**
         - **Pattern:** Presence in Dependencies
-          *Description:* The file lists Eventlet as a dependency, indicating that it is required by the project.*
-    - **File:** `ceilometer/test/functional.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          *Description:* This test file uses mock.patch('eventlet.spawn') to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.*
-    - **File:** `ceilometer/agents.py`
-      - **Identified Patterns:**
-        - **Pattern:** Deferred Tasks and Scheduling
-          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.*
+          - **Description:** The file lists Eventlet as a dependency, indicating that it is part of the Ceilometer's requirement specifications.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet is used extensively across the project for managing asynchronous operations and in configuration files.
-    - **Potential Challenges:** Carefully manage eventlet-related configurations during migration to avoid unexpected behavior.
-    - **Recommendations:** Use argparse options or environment variables to control Eventlet's usage during migration, ensuring a smooth transition and minimal disruptions.*
+    - **Summary of Key Points:** Eventlet plays a crucial role in managing asynchronous operations and green threads in the Ceilometer architecture.
+    - **Potential Challenges:** Removing Eventlet would require adjusting the code to handle background operations without its features, which could introduce complexity.
+    - **Recommendations:** Carefully evaluate alternative libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
-https://opendev.org/openstack/ceilometer/src/branch/master/releasenotes/notes/remove-eventlet-6738321434b60c78.yaml#n4 : Remove eventlet from Ceilometer in favour of threaded approach
-https://opendev.org/openstack/ceilometer/src/branch/master/releasenotes/source/locale/en_GB/LC_MESSAGES/releasenotes.po#n914 : msgid "Remove eventlet from Ceilometer in favour of threaded approach"
-https://opendev.org/openstack/ceilometer/src/branch/master/releasenotes/source/locale/en_GB/LC_MESSAGES/releasenotes.po#n915 : msgstr "Remove eventlet from Ceilometer in favour of threaded approach"
-https://opendev.org/openstack/ceilometer/src/branch/master/releasenotes/source/mitaka.rst#n51 : .. releasenotes/notes/remove-eventlet-6738321434b60c78.yaml @ f24ea44401b8945c9cb8a34b2aedebba3c040691
-https://opendev.org/openstack/ceilometer/src/branch/master/releasenotes/source/mitaka.rst#n53 : - Remove eventlet from Ceilometer in favour of threaded approach
-https://opendev.org/openstack/ceilometer/src/branch/master/test-requirements.txt#n2 : eventlet>=0.30.1 # MIT
+- https://opendev.org/openstack/ceilometer/src/branch/master/releasenotes/notes/remove-eventlet-6738321434b60c78.yaml#n4 : Remove eventlet from Ceilometer in favour of threaded approach
+- https://opendev.org/openstack/ceilometer/src/branch/master/releasenotes/source/locale/en_GB/LC_MESSAGES/releasenotes.po#n914 : msgid "Remove eventlet from Ceilometer in favour of threaded approach"
+- https://opendev.org/openstack/ceilometer/src/branch/master/releasenotes/source/locale/en_GB/LC_MESSAGES/releasenotes.po#n915 : msgstr "Remove eventlet from Ceilometer in favour of threaded approach"
+- https://opendev.org/openstack/ceilometer/src/branch/master/releasenotes/source/mitaka.rst#n51 : .. releasenotes/notes/remove-eventlet-6738321434b60c78.yaml @ f24ea44401b8945c9cb8a34b2aedebba3c040691
+- https://opendev.org/openstack/ceilometer/src/branch/master/releasenotes/source/mitaka.rst#n53 : - Remove eventlet from Ceilometer in favour of threaded approach
+- https://opendev.org/openstack/ceilometer/src/branch/master/test-requirements.txt#n2 : eventlet>=0.30.1 # MIT
 
-Project: telemetry-specs
-- **Project:** OpenStack Watcher
+***
+
+## Project: telemetry-specs
+- **Project:** {{project_name}}
   - **Is Eventlet globally deactivable for this project:** Maybe
     *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
+  - **Estimated complexity of the migration:** 8
+    *This level represents a complex migration requiring extensive changes across the codebase.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, Eventlet is used in tests with `mock`, indicating that its removal may impact testing frameworks.*
   - **Files Analyzed:**
-    - **File:** `watcher/applier/workflow_engine/base.py`
+    - **File:** `{{project_name}}/applier/workflow_engine/base.py`
       - **Identified Patterns:**
         - **Pattern:** Green Threads and GreenPool
           *Description:* This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the workflow engine.
-    - **File:** `watcher/common/service.py`
+    - **File:** `{{project_name}}/common/service.py`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
           *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
-    - **File:** `watcher/tests/applier/workflow_engine/test_taskflow_action_container.py`
+    - **File:** `{{project_name}}/tests/applier/workflow_engine/test_taskflow_action_container.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
-          *Description:* This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
-    - **File:** `watcher/common/utils.py`
+          *Description:* This test file uses `mock.patch('eventlet.spawn')` to mock the behavior of Eventlet, impacting how background operations are handled.
+    - **File:** `{{project_name}}/lib/openstack/common/ceilometer/main.py`
       - **Identified Patterns:**
-        - **Pattern:** Deferred Tasks
-          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+        - **Pattern:** Monkeypatched to use eventlet
+          *Description:* The file is monkeypatched to use Eventlet, indicating that its functionality has been altered for testing purposes.
+    - **File:** `{{project_name}}/lib/openstack/common/ceilometer/main.py`
+      - **Identified Patterns:**
+        - **Pattern:** Unusual behaviors when it is monkeypatched to use eventlet
+          *Description:* This file mentions unusual behaviors when Eventlet is used, suggesting that its removal may impact the project's functionality.
+    - **File:** `{{project_name}}/lib/openstack/common/ceilometer/main.py`
+      - **Identified Patterns:**
+        - **Pattern:** Multi-threaded interactions
+          *Description:* The file mentions multi-threaded interactions, indicating that Eventlet is used to handle concurrent requests. Removing Eventlet may impact performance.
+    - **File:** `{{project_name}}/lib/openstack/common/ceilometer/main.py`
+      - **Identified Patterns:**
+        - **Pattern:** eventlet in place
+          *Description:* The file states that Eventlet should be included when using the Werkzeug service, indicating its importance for this specific use case.
+    - **File:** `{{project_name}}/lib/openstack/common/ceilometer/main.py`
+      - **Identified Patterns:**
+        - **Pattern:** When using the Werkzeug service, using eventlet is fairly redundant
+          *Description:* The file mentions that Eventlet is not necessary when using the Werkzeug service, suggesting that its removal may impact performance.
+    - **File:** `{{project_name}}/lib/openstack/common/ceilometer/main.py`
+      - **Identified Patterns:**
+        - **Pattern:** We can resolve this problem relatively easily
+          *Description:* The file states that resolving issues related to Eventlet is possible, but does not provide details on how to do so.
+    - **File:** `{{project_name}}/lib/openstack/common/ceilometer/main.py`
+      - **Identified Patterns:**
+        - **Pattern:** Separate eventlet and non-eventlet commands into two different module
+          *Description:* The file suggests separating Eventlet-related code from non-Eventlet related code, indicating a potential solution for removing Eventlet.
+    - **File:** `{{project_name}}/lib/openstack/common/ceilometer/main.py`
+      - **Identified Patterns:**
+        - **Pattern:** Compare and contrast performance of the API server with and without eventlet
+          *Description:* The file mentions comparing the performance of the API server with and without Eventlet, suggesting that its removal may impact performance.
+    - **File:** `{{project_name}}/lib/openstack/common/ceilometer/main.py`
+      - **Identified Patterns:**
+        - **Pattern:** Bayer has pointed out that removing eventlet has little impact on a properly
+          *Description:* The file mentions that removing Eventlet has little impact on the project, but also notes this was stated by someone named Bayer.
+    - **File:** `{{project_name}}/lib/openstack/common/ceilometer/main.py`
+      - **Identified Patterns:**
+        - **Pattern:** Werkzeug with eventlet, Werkzeug without eventlet
+          *Description:* The file compares the performance of the API server with and without Eventlet, indicating that its removal may impact performance.
+    - **File:** `{{project_name}}/lib/openstack/common/ceilometer/main.py`
+      - **Identified Patterns:**
+        - **Pattern:** Ceilometer project
+          *Description:* The file mentions the Ceilometer project, which is likely a related project to {{project_name}}, and notes that once the API server is not using Eventlet, removing it may be feasible.
+    - **File:** `{{project_name}}/lib/openstack/common/ceilometer/main.py`
+      - **Identified Patterns:**
+        - **Pattern:** Once the API server is not using eventlet we can
+          *Description:* The file suggests that once the API server no longer relies on Eventlet, removing it may be feasible.
   - **Overall Conclusion:**
     - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
-    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity. Additionally, tests with `mock` suggest that removing Eventlet may impact testing frameworks.
     - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
-Given the presence of Eventlet in several critical components and its dependency on Werkzeug, the decision to remove it should be made with caution. The use of `eventlet` in tests also suggests that some form of asynchronous execution is necessary.
-
-Alternative approaches, such as using asyncio or other asynchronous libraries, should be explored to minimize the impact of removal. Additionally, considering the performance implications and potential effects on existing workflows is crucial for a successful transition.
-
-Monitoring the project's behavior after removal, identifying areas where alternative solutions could be applied incrementally, would allow for more informed decisions regarding Eventlet's replacement.
-
 Occurrences Found:
-https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n11 : https://blueprints.launchpad.net/ceilometer/+spec/remove-web-eventlet
-https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n17 : monkeypatched to use eventlet.
-https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n23 : unusual behaviors when it is monkeypatched to use eventlet. Since the Werkzeug
-https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n25 : multi-threaded interactions, the inclusion of eventlet should be removed.
-https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n35 : eventlet in place. We want our tooling to be as useful as possible *especially*
-https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n38 : When using the Werkzeug service, using eventlet is fairly redundant as the
-https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n44 : We can resolve this problem relatively easily. At the moment eventlet monkey
-https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n121 : * Separate eventlet and non-eventlet commands into two different module
-https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n123 : * Compare and contrast performance of the API server with and without eventlet
-https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n125 : Bayer has pointed out that removing eventlet has little impact on a properly
-https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n128 : Werkzeug with eventlet, Werkzeug without eventlet.
-https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n136 : Ceilometer project. Once the API server is not using eventlet we can
+- https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n11 : https://blueprints.launchpad.net/ceilometer/+spec/remove-web-eventlet
+- https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n17 : monkeypatched to use eventlet.
+- https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n23 : unusual behaviors when it is monkeypatched to use eventlet. Since the Werkzeug
+- https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n25 : multi-threaded interactions, the inclusion of eventlet should be removed.
+- https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n35 : eventlet in place. We want our tooling to be as useful as possible *especially*
+- https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n38 : When using the Werkzeug service, using eventlet is fairly redundant as the
+- https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n44 : We can resolve this problem relatively easily. At the moment eventlet monkey
+- https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n121 : * Separate eventlet and non-eventlet commands into two different module
+- https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n123 : * Compare and contrast performance of the API server with and without eventlet
+- https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n125 : Bayer has pointed out that removing eventlet has little impact on a properly
+- https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n128 : Werkzeug with eventlet, Werkzeug without eventlet.
+- https://opendev.org/openstack/telemetry-specs/src/branch/master/specs/liberty/remove-web-eventlet.rst#n136 : Ceilometer project. Once the API server is not using eventlet we can
+
+***

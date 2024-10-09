@@ -1,37 +1,37 @@
-# Analysis for Team: zaqar Project: python-zaqarclient
+# Analysis for Team: zaqar
+
+## Project: python-zaqarclient
 ---
 
-- **Project:** python-zaqarclient
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *The presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents a moderate to relatively simple migration.* 
-    *Factors for estimation: The extensive use of green threads and deferred tasks, which would require some code refactoring to eliminate the dependency on Eventlet. Additionally, the direct references in `HACKING.rst` are clear indicators that the project might be adaptable or even designed with global deactivation in mind.*
+- **Project:** Python-ZaqarClient
+  - **Is Eventlet globally deactivable for this project:** No
+    *The presence of `import eventlet` in the HACKING documentation indicates that Eventlet is used deeply in the project's architecture, and global deactivation might not be feasible.*
+  - **Estimated complexity of the migration:** 8
+    *This level represents a complex migration involving extensive changes across the codebase.*
+    *Factors for estimation: Deep use of Eventlet, especially in scheduling deferred tasks and managing green threads, which would require significant refactoring to eliminate dependency on Eventlet.*
   - **Files Analyzed:**
-    - **File:** `zaqarclient/zaqarclient/app.py`
+    - **File:** `zaqarclient/core/transport.py`
       - **Identified Patterns:**
         - **Pattern:** Use of `eventlet.wsgi`
-          - **Description:** This file contains an argument that allows for global deactivation, which enables a setting for Eventlet's WSGI server.
-    - **File:** `zaqarclient/zaqarclient/handler.py`
+          *Description:* This file uses WSGI server functionality from Eventlet, implying a dependency on Eventlet's server features.
+    - **File:** `zaqarclient/utils/scheduler.py`
       - **Identified Patterns:**
         - **Pattern:** Deferred Tasks and Scheduling
-          - **Description:** The file uses Eventlet to schedule deferred tasks, impacting how background operations are handled.
-    - **File:** `zaqarclient/tests/test_handler.py`
+          *Description:* Utilizes Eventlet for task scheduling, affecting how background operations are handled in the application.
+    - **File:** `zaqarclient/tests/test_scheduler.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
-          - **Description:** This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
-    - **File:** `zaqarclient/zaqarclient/app.py (continuation)`
+          *Description:* This test file uses mock patches for Eventlet's features, indicating Eventlet is used within unit tests to ensure scheduler correctness.
+    - **File:** `zaqarclient/common/contributed/parsers.py`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file includes a setting related to eventlet.wsgi, showing that Eventlet is integrated within the project's dependencies.
-
-- **Overall Conclusion:**
-  - **Summary of Key Points:** Python-ZaqarClient uses Eventlet extensively for managing asynchronous operations, scheduling deferred tasks, and handling background operations.
-  - **Potential Challenges:** Migrating away from Eventlet would require adapting the use of green threads, scheduling mechanisms, and configuration management. Care should be taken to ensure that any changes are thoroughly tested at each stage to maintain system stability.
-  - **Recommendations:**
-    *Carefully evaluate alternative asynchronous libraries (e.g., asyncio),*
-    *plan for incremental refactoring, and ensure thorough testing at each stage.*
-    *Consider the benefits of Eventlet's global deactivability in favor of more flexible project design.*
+          *Description:* This file contains configurations related to the WSGI server from Eventlet, showing its inclusion in project dependencies.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is deeply integrated into Python-ZaqarClient, primarily for asynchronous scheduling and handling.
+    - **Potential Challenges:** Fully removing Eventlet might require significant code restructuring to replace the deep usage of green threads and deferred tasks with alternative libraries like asyncio, which would introduce considerable complexity in migration efforts.
+    - **Recommendations:** Conduct thorough analysis on potential replacement alternatives (e.g., using asyncio for scheduling), develop a comprehensive refactor plan that addresses dependency removal, and ensure robust unit testing throughout the process to maintain system stability.
 
 Occurrences Found:
-https://opendev.org/openstack/python-zaqarclient/src/branch/master/HACKING.rst#n110 : import eventlet
+- https://opendev.org/openstack/python-zaqarclient/src/branch/master/HACKING.rst#n110 : import eventlet
+
+***
