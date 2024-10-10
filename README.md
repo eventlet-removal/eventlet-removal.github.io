@@ -22,7 +22,8 @@ This a tool based on AI, it consume:
 - a list of occurence found by [using beagle](https://beagle-hound.readthedocs.io);
 - an AI prompt to tell to the model what you want to do, the prompt used is included
   in this repository but you can design your own prompt;
-- an [ollama server](https://github.com/ollama/ollama/blob/main/docs/linux.md) url (e.g `http://0.0.0.0:11433/api/generate`);
+- an [ollama server](https://github.com/ollama/ollama/blob/main/docs/linux.md) url 
+  (e.g `http://0.0.0.0:11434/api/generate`)(you might want to deploy your own server);
 - a list of OpenStack list extracted from the OpenStack governance repository
   (`wget https://raw.githubusercontent.com/openstack/governance/refs/heads/master/reference/projects.yaml`)
 - an output dir to tell to the script where to store the generated reports
