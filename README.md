@@ -2,7 +2,7 @@
 
 Eventlet removal in an OpenStack context.
 
-This repository aims to host the analyze of the various OpenStack deliverables.
+This repository aims to host the [analyze of the various OpenStack deliverables](./analyze).
 
 ## Tools
 
