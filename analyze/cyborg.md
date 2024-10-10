@@ -6,39 +6,34 @@
 - **Project:** Cyborg
   - **Is Eventlet globally deactivable for this project:** Maybe
     *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 8
-    *This level represents a complex migration involving extensive changes across the codebase.*
-    *Factors for estimation: Extensive use of deferred tasks and scheduling using Eventlet's features, significant configuration management dependencies, and test cases that rely on `eventlet.monkey_patch()`*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to simple migration requiring minimal code changes.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require some refactoring to eliminate the dependency on Eventlet, but overall the usage is not deeply integrated into core functionality.*
   - **Files Analyzed:**
     - **File:** `cmd/__init__.py`
       - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch()` to mock Eventlet's behavior, indicating that it is used in unit tests.
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          *Description:* The file imports Eventlet, indicating a dependency on its WSGI server.
     - **File:** `common/rpc.py`
       - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** This file has an executor parameter set to `eventlet`, indicating a dependency on Eventlet's WSGI server.
+        - **Pattern:** Use of `eventlet.wsgi`
+          *Description:* The executor is set to 'eventlet', which uses the Eventlet WSGI server.
     - **File:** `tests/base.py`
       - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          - **Description:** The file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the workflow engine.
+        - **Pattern:** Use in Tests with `mock`
+          *Description:* The file uses `eventlet.Timeout` and `eventlet.monkey_patch`, indicating that Eventlet is used in unit tests.
     - **File:** `tests/unit/__init__.py`
       - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** This test file uses `eventlet.monkey_patch(os=False)` to mock Eventlet's behavior, indicating that it is used in unit tests.
+        - **Pattern:** Deferred Tasks and Scheduling
+          *Description:* The file uses `eventlet.Timeout` to schedule deferred tasks, impacting how background operations are handled.
     - **File:** `requirements.txt`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file specifies a dependency on Eventlet 0.26.0, which indicates the presence of Eventlet in configuration files.
-    - **File:** `cmd/worker.py`
-      - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          - **Description:** This file uses `eventlet.spawn` to manage green threads, indicating a need for Eventlet's asynchronous features.
-
-- **Overall Conclusion:**
-  - **Summary of Key Points:** Eventlet is extensively used in Cyborg for managing asynchronous operations using green threads and deferred tasks. The project has multiple tests that rely on `eventlet.monkey_patch()` to ensure correct behavior.
-  - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms, adjusting configuration management, and ensuring thorough testing at each stage to maintain system stability.
-  - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, consider rewriting tasks and scheduling using different methods, and ensure comprehensive unit tests are run throughout the migration process.
+          *Description:* Eventlet is listed as a dependency with a version range, indicating its presence in the project's configuration files.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce some complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/cyborg/src/branch/master/cyborg/cmd/__init__.py#n16 : import eventlet

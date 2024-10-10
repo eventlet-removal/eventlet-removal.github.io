@@ -1,37 +1,42 @@
 # Analysis for Team: zun
 
 ## Project: zun
----
-
 - **Project:** zun
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: Although Eventlet is not explicitly mentioned in the configuration files and dependencies, the presence of `eventlet>=0.28.0 # MIT` in the requirements.txt file suggests that Eventlet can be deactivated.*
-  - **Estimated complexity of the migration:** 4
-    *This level represents a simple migration with minimal code changes.*
-    *Factors for estimation: The majority of Eventlet usage is encapsulated within modules and classes, allowing for easy replacement or deactivation without affecting critical functionalities.*
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 8
+    *This level represents a complex migration involving extensive changes across the codebase.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
   - **Files Analyzed:**
     - **File:** `zun/cmd/__init__.py`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          *Description: The file contains the `eventlet.monkey_patch()` function, indicating a dependency on Eventlet.*
-    - **File:** `zun/common/rpc_service.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use of `eventlet.wsgi`
-          *Description: The file uses `executor='eventlet'` in the `rpc_service.py`, which is an indicator of Eventlet's use in WSGI server management.*
+          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
     - **File:** `zun/container/docker/driver.py`
       - **Identified Patterns:**
         - **Pattern:** Deferred Tasks and Scheduling
-          *Description: The file utilizes `eventlet.Timeout(CONF.docker.execute_timeout)` to manage timeouts, impacting deferred tasks scheduling.*
+          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
     - **File:** `zun/websocket/websocketproxy.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
-          *Description: This test file imports `hubs` from Eventlet's `eventlet` module using `from eventlet import hubs`, demonstrating its use in testing.*
-  - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet is widely used within the zun project, primarily for managing asynchronous operations and WSGI server management.
-    - **Potential Challenges:** Deactivating or replacing Eventlet requires careful consideration to avoid breaking core functionality. Incremental refactoring and thorough testing should be emphasized to ensure system stability during migration.*
-    - **Recommendations:**
+          *Description:* The file uses `eventlet.monkey_patch()` for monkey patching Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+    - **File:** `zun/common/rpc_service.py`
+      - **Identified Patterns:**
+        - **Pattern:** Green Threads and GreenPool
+          *Description:* The file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the RPC service.
+    - **File:** `zun/common/utils.py`
+      - **Identified Patterns:**
+        - **Pattern:** Passthrough Method for Eventlet Spawn N
+          *Description:* Contains a passthrough method for `eventlet.spawn_n`, indicating its usage in handling tasks asynchronously.
 
-- zun's reliance on eventlet makes it an ideal candidate for exploring alternative libraries (e.g., asyncio). A step-by-step approach, including testing at each stage, will help maintain system stability while deactivating Eventlet.
+- **Overall Conclusion:**
+  - **Summary of Key Points:** Eventlet is deeply integrated into the zun project, particularly in managing asynchronous operations and scheduling deferred tasks.
+  - **Potential Challenges:** Removing Eventlet would require significant refactoring to handle asynchronous operations and adjusting configuration management. Thorough testing at each stage is crucial to maintain system stability.
+  - **Recommendations:**
+
+    *Carefully evaluate alternative asynchronous libraries (e.g., asyncio) for potential use cases.
+    *Plan for incremental refactoring of core asynchronous mechanisms to eliminate the dependency on Eventlet.
+    *Ensure thorough testing and validation of the refactored codebase at each stage.
 
 Occurrences Found:
 - https://opendev.org/openstack/zun/src/branch/master/contrib/nova-docker/nova/virt/zun/driver.py#n27 : import eventlet

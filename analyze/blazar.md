@@ -1,35 +1,46 @@
 # Analysis for Team: blazar
 
 ## Project: blazar
----
-
-- **Project:** blazar
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: The presence of an Eventlet-specific argparse option (`--disable-eventlet`) suggests that Eventlet can be globally deactivated.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents a moderate migration requiring some code changes.*
-    *Factors for estimation: Some minor adjustments to configuration management and occasional use of `eventlet.monkey_patch`*
+- **Project:** Blazar
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 8
+    *This level represents a complex migration requiring significant changes across the codebase.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant refactoring to eliminate the dependency on Eventlet. Additionally, the presence of Eventlet-specific configurations in configuration files adds complexity.*
   - **Files Analyzed:**
     - **File:** `blazar/api/v1/app.py`
       - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+        - **Pattern:** Green Threads and GreenPool
+          *Description:* This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the workflow engine.
     - **File:** `blazar/cmd/api.py`
       - **Identified Patterns:**
-        - **Pattern:** Use of `eventlet.wsgi`
-          *Description:* This file imports and uses the `wsgi.server` function from `eventlet`, indicating its direct usage.
-    - **File:** `blazar/cmd/manager.py`
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+    - **File:** `blazar/tests/manager/test_service.py`
       - **Identified Patterns:**
-        - **Pattern:** Eventlet Monkey Patching
-          *Description:* The file uses `eventlet.monkey_patch()` to monkey patch the `__import__` function, suggesting global modifications for compatibility reasons.
+        - **Pattern:** Use of monkey patching for testing
+          *Description:* This file uses `eventlet.monkey_patch` to isolate the eventlet module, indicating that Eventlet is being used in a test environment.
+    - **File:** `blazar/manager/service.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use of green threads for task execution
+          *Description:* This file uses `eventlet.spawn` to execute tasks asynchronously, which suggests the use of Eventlet's green thread mechanism.
+    - **File:** `blazar/rpc.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use of eventlet executor
+          *Description:* The file uses an `executor='eventlet'` parameter in the RPC function, indicating that Eventlet is being used for task execution.
+    - **File:** `blazar/monitor/notification_monitor.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use of eventlet executor
+          *Description:* The file uses an `executor='eventlet'` parameter in the notification monitor function, indicating that Eventlet is being used for task execution.
     - **File:** `blazar/requirements.txt`
-      - **Identified Pattern:** Dependency on Eventlet
-        *Description:* The file lists an eventlet version constraint in the MIT license range (>=0.18.2), indicating Eventlet's dependency.
+      - **Identified Patterns:**
+        - **Pattern:** Eventlet version constraint
+          *Description:* The file contains a version constraint for Eventlet (>=0.18.2), which suggests that Eventlet is required by the project.
 
 - **Overall Conclusion:**
-  - **Summary of Key Points:** Eventlet's usage is mainly limited to configuration and compatibility modifications, with direct instances of `wsgi.server` and a monkey patching of the import function.
-  - **Potential Challenges:** The global deactivation of Eventlet could introduce minor issues related to event-driven handling and require adjustments in some code segments for better stability.
-  - **Recommendations:** Carefully review event-driven operations, plan for the replacement of `eventlet` with an alternative async runtime if necessary (e.g., asyncio), and ensure that testing covers these modifications thoroughly.
+  - **Summary of Key Points:** Eventlet is used extensively across the Blazar project, particularly for managing asynchronous operations using green threads and in configuration files.
+  - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity. Additionally, the presence of Eventlet-specific configurations in configuration files adds to the challenge.
+  - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/blazar/src/branch/master/blazar/api/v1/app.py#n16 : import eventlet

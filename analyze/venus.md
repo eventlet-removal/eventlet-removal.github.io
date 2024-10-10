@@ -1,31 +1,34 @@
 # Analysis for Team: venus
 
 ## Project: venus
----
-
 - **Project:** Venus
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: The presence of an `eventlet.wsgi` reference in the logging configuration suggests that Eventlet can be deactivated or replaced with an alternative WSGI server.*
-  - **Key Features of Eventlet Usage:**
-    + Green threads for asynchronous operations
-    + Event-driven I/O using `eventlet.sleep(0.1)`
-    + WSGI server setup with `eventlet.spawn` and `eventlet.listen`
-    + Integration with the `venus/wsgi/eventlet_server.py` module
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option may indicate that it might be deactivable.*
+  - **Eventlet usage analysis:**
+    * The `venus/logging_sample.conf` file contains a logger with the name "eventlet.wsgi.server".
+    * The `venus/wsgi/eventlet_server.py` file is required by the project, indicating its use.
+    * The `openstack_venus.egg-info/SOURCES.txt` file lists `venus/wsgi/eventlet_server.py` as a source file, further confirming its presence.
+    * The `openstack_venus.egg-info/requires.txt` file specifies `eventlet>=0.26.0` as a required package, indicating that Eventlet is used in the project.
+    * The `requirements.txt` file also lists `eventlet>=0.26.0 # MIT` as a dependency, reinforcing its use.
+  - **Conclusion:** Eventlet appears to be used extensively throughout the Venus project, particularly for managing asynchronous operations using green threads and in configuration files.
 
-- **Configuration and Requirements:**
-  * The project uses Eventlet version 0.26.0 or later.
-  * The `requirements.txt` file lists `eventlet>=0.26.0` as a dependency.
-  * The logging configuration references `eventlet.wsgi.server`.
-  * The WSGI server setup uses `eventlet.spawn` and `eventlet.listen`.
+- **Eventlet features analysis:**
+    * The `venus/wsgi/eventlet_server.py` file uses Eventlet's features such as:
+      + Creating an eventlet server (`self._server = eventlet.spawn(**wsgi_kwargs)`).
+      + Using the `eventlet.sleep(0.1)` function to wait for a short period.
+      + Importing and using the `eventlet.wsgi.HttpProtocol` class.
+      + Configuring the eventlet pool size (`self._pool = eventlet.GreenPool(self.pool_size)`).
+    * The use of Eventlet's features suggests that it is used to manage asynchronous operations, such as handling incoming requests and responses.
 
-- **Alternative Asynchronous Libraries:**
-  * The use of asyncio or other alternative asynchronous libraries could be considered as alternatives to Eventlet.
+- **Potential challenges analysis:**
+  * Removing Eventlet would require replacing core asynchronous mechanisms in the project.
+  * Adjusting configuration management might be necessary to accommodate alternative libraries or approaches.
+  * Thorough testing at each stage of refactoring would be essential to maintain system stability.
 
-- **Impact on Removal:**
-  * Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management.
-  * This could introduce significant complexity, particularly for the WSGI server setup.
-
-**Recommendation:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
+- **Recommendations:**
+    * Carefully evaluate alternative asynchronous libraries (e.g., asyncio) and their compatibility with Venus's existing codebase.
+    * Plan for incremental refactoring, ensuring that changes do not introduce significant complexity or break existing functionality.
+    * Perform thorough testing at each stage of the refactoring process to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/venus/src/branch/master/etc/venus/logging_sample.conf#n54 : [logger_eventletwsgi]

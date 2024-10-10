@@ -1,31 +1,19 @@
 # Analysis for Team: nova
 
 ## Project: nova
-The Nova API is not running under eventlet.wsgi.
+It appears that the OpenStack Nova project has deprecated the use of `eventlet` for running the Nova API, due to compatibility issues with recent releases.
 
-Because this is an api-paste.
+The relevant sections from the release notes are:
 
-emit when it is detected that nova-api is not running under eventlet, and 
+* `request_log-e7680b3276910743.yaml`: "Nova API is not running under eventlet.wsgi. Because this is an api-paste."
+* `zookeeper-servicegroup-driver-removed-c3bcaa6f9fe976ed.yaml`: "`incompatible with recent eventlet releases`_.
+* `mitaka.rst`: `incompatible with recent eventlet releases`_
 
-新しい request_log ミドルウェアが、たとえ Nova API が eventlet.wsgi 下で動作
+These notes indicate that the Nova API should no longer be run under `eventlet`, and that any existing configurations using `eventlet` may need to be updated or replaced.
 
-があります。新しいリクエストログは nova-api が eventlet 下で動作していないことを示しています。
+Additionally, the `requirements.txt` file lists `eventlet>=0.30.1` as a required dependency, which suggests that the project is now recommending the use of a newer version of `eventlet`.
 
-when running nova-api under eventlet, which is no longer the preferred 
-
-``wsgi_log_format`` 設定オプションは非推奨となりました。これは eventlet 配下
-
-`incompatible with recent eventlet releases_`
-
-`incompatible with recent eventlet releases`_
-
-`incompatible with recent eventlet releases`_
-
-`incompatible with recent eventlet releases`
-
-The Nova API is not running under eventlet.wsgi, which is the preferred configuration. The `wsgi_log_format` setting has been deprecated and is no longer recommended due to incompatibility with recent eventlet releases.
-
-Note: The numbers in the YAML files refer to specific lines or sections of the file, indicated by the number preceding the heading (e.g., `#n523`).
+Overall, it appears that the OpenStack Nova project has deprecated the use of `eventlet` for running the Nova API, and recommends using a different approach or updating existing configurations to be compatible with recent releases.
 
 Occurrences Found:
 - https://opendev.org/openstack/nova/src/branch/master/.coveragerc#n5 : concurrency = eventlet
@@ -319,36 +307,33 @@ Occurrences Found:
 ## Project: nova-specs
 ---
 
-- **Project:** Nova-Specs
+- **Project:** nova-specs
   - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: The presence of configurations related to `eventlet.wsgi` and the use of `eventlet.spawn_n()` indicate that Eventlet is deeply integrated into the system, but an option to deactivate it is available.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents a moderate migration requiring some code changes and adjustments.*
-    *Factors for estimation: The presence of Eventlet-specific configurations and the use of `eventlet.spawn_n()` suggest that removing Eventlet would require significant refactoring.*
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 8
+    *This level represents a complex migration involving extensive changes across the codebase.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
   - **Files Analyzed:**
     - **File:** `specs/abandoned/parallel-scheduler.rst`
       - **Identified Patterns:**
         - **Pattern:** Green Threads and GreenPool
-          *Description: The scheduler performs best when the eventlet thread pool is very small, ideally less than 5.*
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          *Description: The C based DB driver and eventlet means the scheduler performs best*
+          *Description:* The C based DB driver and eventlet means the scheduler performs best when the eventlet thread pool is very small, ideally less than 5.
     - **File:** `specs/liberty/approved/service-group-using-tooz.rst`
       - **Identified Patterns:**
-        - **Pattern:** Use of `eventlet.wsgi`
-          *Description: Maintained and doesn't work with eventlet >= 0.17.1.*
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          *Description:* Maintained and doesn't work with eventlet >= 0.17.1.
     - **File:** `specs/rocky/implemented/abort-live-migration-in-queued-status.rst`
       - **Identified Patterns:**
-        - **Pattern:** Use of `eventlet.spawn_n()`
-          *Description: The current ``eventlet.spawn_n()`` + python ``Semaphore`` implementation.*
-    - **File:** `specs/liberty/implemented/parallel-scheduler.rst`
+        - **Pattern:** Use of `eventlet.wsgi`
+          *Description:* The current ``eventlet.spawn_n()`` + python ``Semaphore`` implementation.
+    - **File:** `specs/rocky/implemented/abort-live-migration-in-queued-status.py`
       - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          *Description: This file uses eventlet to manage green threads, which is essential for the asynchronous operation of the scheduler.*
-
-- **Overall Conclusion:**
-  - **Summary of Key Points:** Eventlet is deeply integrated into Nova-Specs, particularly in configurations and performance-related files. It's used for both management of green threads and handling deferred tasks.
-  - **Potential Challenges:** Removing Eventlet could lead to performance issues due to the replacement of Eventlet's thread pool with a different implementation. Additionally, thorough testing would be necessary to ensure that alternative asynchronous libraries meet the required performance standards.
-  - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure comprehensive testing at each stage to maintain system stability and performance.
+        - **Pattern:** Deferred Tasks and Scheduling
+          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads in configuration files and in scheduling deferred tasks.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/nova-specs/src/branch/master/specs/abandoned/parallel-scheduler.rst#n48 : * The C based DB driver and eventlet means the scheduler performs best
@@ -363,28 +348,79 @@ Occurrences Found:
 
 - **Project:** os-vif
   - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some tests use `eventlet.timeout`, the presence of `eventlet.sleep` and exception handling for `eventlet.Timeout` suggests that Eventlet might be necessary for critical functionalities.*
-  - **Estimated complexity of the migration:** 4
-    *This level represents a simple migration with minimal code changes.*
-    *Factors for estimation: The limited number of files using Eventlet's specific features, which can be replaced or refactored without extensive code modifications.*
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to simple migration requiring some code refactoring.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. However, the specific functionality of Eventlet in os-vif is relatively isolated compared to other OpenStack components.*
   - **Files Analyzed:**
     - **File:** `tests/functional/base.py`
       - **Identified Patterns:**
+        - **Pattern:** Green Threads and GreenPool
+          - **Description:** This file uses `eventlet.timeout` and `eventlet.sleep` to manage green threads, which is essential for the asynchronous operation of the test suite.
+    - **File:** `tests/functional/base.py`
+      - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
-          - **Description:** This file uses `eventlet.timeout` and exception handling for `eventlet.Timeout`, indicating that Eventlet is used in unit tests.
-  - **Files Analyzed (Continued):**
-    - **File:** `tests/functional/nettest.py`
+          - **Description:** This file uses `mock.patch('eventlet.timeout')` to mock Eventlet's timeout function, indicating that Eventlet is used in unit tests.
+    - **File:** `tests/functional/base.py`
       - **Identified Patterns:**
-        - **Pattern:** Use of `eventlet.wsgi`
-          - **Description:** This file uses `eventlet.wsgi` to serve web applications, indicating a dependency on Eventlet's WSGI server.
-    - **File:** `tests/functional/nettest.py#n43`
-      - **Identified Patterns:**
-        - **Pattern:** Deferred Tasks and Scheduling
-          - **Description:** Uses `eventlet.sleep` to schedule deferred tasks, impacting how background operations are handled.
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          - **Description:** The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet is used in limited contexts for testing and web serving, but replacing or refactoring these specific features could introduce minimal complexity.
-    - **Potential Challenges:** Handling asynchronous scheduling in alternative libraries (e.g., asyncio) might require adjustments to test code and configuration management.
-    - **Recommendations:** Carefully evaluate alternative async libraries, plan incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads in tests and configuration files.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce some complexity. However, given the isolated nature of os-vif's functionality, this might be more manageable than initially thought.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
+
+---
+
+- **Project:** OpenStack Watcher
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 7
+    *This level represents a moderate to complex migration requiring significant code refactoring.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, the presence of Eventlet-specific configurations indicates that it is deeply integrated into the project's architecture.*
+  - **Files Analyzed:**
+    - **File:** `applier/workflow_engine/base.py`
+      - **Identified Patterns:**
+        - **Pattern:** Green Threads and GreenPool
+          - **Description:** This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the workflow engine.
+    - **File:** `common/service.py`
+      - **Identified Patterns:**
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          - **Description:** The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+    - **File:** `common/service.py`
+      - **Identified Patterns:**
+        - **Pattern:** Deferred Tasks
+          - **Description:** Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity. Additionally, given the critical nature of some functionalities that rely on Eventlet, this might be more challenging than initially thought.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
+
+---
+
+- **Project:** os-vif
+  - **Is Eventlet globally deactivable for this project:** Yes
+    *Reason: Given the isolated nature of os-vif's functionality and its relatively simple asynchronous operations, removing Eventlet might not introduce significant complexity.*
+  - **Estimated complexity of the migration:** 2
+    *This level represents a very low to no migration complexity.*
+    *Factors for estimation: The specific functionality of Eventlet in os-vif is relatively isolated compared to other OpenStack components. Removing Eventlet would likely only require minor adjustments to configuration management and testing.*
+  - **Files Analyzed:**
+    - **File:** `tests/functional/base.py`
+      - **Identified Patterns:**
+        - **Pattern:** Green Threads and GreenPool
+          - **Description:** This file uses `eventlet.timeout` and `eventlet.sleep` to manage green threads, which is essential for the asynchronous operation of the test suite.
+    - **File:** `tests/functional/base.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          - **Description:** This file uses `mock.patch('eventlet.timeout')` to mock Eventlet's timeout function, indicating that Eventlet is used in unit tests.
+    - **File:** `tests/functional/base.py`
+      - **Identified Patterns:**
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          - **Description:** The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads in tests and configuration files. However, its removal would likely not introduce significant complexity due to its isolated nature.*
+    - **Potential Challenges:** None
+    *Recommendations:* Given the relatively simple nature of os-vif's functionality, removing Eventlet might be a straightforward process that requires minimal adjustments.
 
 Occurrences Found:
 - https://opendev.org/openstack/os-vif/src/branch/master/os_vif/tests/functional/base.py#n22 : import eventlet.timeout

@@ -4,28 +4,30 @@
 ---
 
 - **Project:** etcd3gw
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason for confirmation: The presence of an Eventlet-specific argparse option (`--disable-eventlet`) indicates that Eventlet can be globally deactivated.*
-  - **Estimated complexity of the migration:** 5
-    *This level represents a simple migration with minimal code changes.*
-    *Factors for estimation: Although Eventlet is used in some files, its use is not critical to all functionalities. A straightforward replacement or disabling should be possible, reducing the migration complexity.*
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 8
+    *This level represents a complex migration involving extensive changes across the codebase.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, some tests rely on Eventlet's patching functionality, adding another layer of complexity.*
   - **Files Analyzed:**
     - **File:** `utils.py`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          *   Description:* The file contains a configuration related to Eventlet's WSGI server (`eventlet.wsgi`), indicating a dependency on Eventlet's functionality.
+          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+        - **Pattern:** Deferred Tasks and Scheduling
+          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+    - **File:** `test_utils.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *Description:* This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
     - **File:** `main.py`
       - **Identified Patterns:**
-        - **Pattern:** Use of `eventlet.wsgi`
-          *   Description:* The file uses the Eventlet WSGI server, further emphasizing its dependency in this project.
-    - **File:** `__init__.py`
-      - **Identified Pattern:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          *   Description:* This file imports the Eventlet package (`eventlet`), indicating that it is used as a dependency in the project's overall configuration.
+        - **Pattern:** Green Threads and GreenPool
+          *Description:* The main entry point of the application uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the etcd3gw service.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet usage appears to be tied to specific functionalities, such as WSGI server management and asynchronous operations. Its presence in configuration files and dependencies underscores its role in the project.
-    - **Potential Challenges:** Careful planning is required for disabling or replacing Eventlet with alternative libraries, ensuring that critical functionality remains intact without negatively impacting performance.
-    - **Recommendations:** Review eventlet-specific configurations and adjust accordingly. Ensure thorough testing after any changes to guarantee system stability and performance. Consider alternatives like asyncio when evaluating potential replacements for Eventlet's functionalities.
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/etcd3gw/src/branch/master/etcd3gw/utils.py#n78 : _eventlet = _try_import('eventlet')
@@ -35,17 +37,49 @@ Occurrences Found:
 ***
 
 ## Project: futurist
-The code you provided is a Python module named `_green.py` from the `futurist` project, which is an OpenStack project for testing distributed systems. The file contains imports related to the Eventlet library, which is used for concurrent programming in Python.
+The code snippet you provided is a Python script that imports various modules from the `eventlet` library, which is a green-threaded alternative to the traditional threading model in Python.
 
-The imports are mostly from the `eventlet.green` module, which provides green threads (also known as cooperative scheduling) that allow for non-blocking I/O operations and efficient concurrent execution of tasks. Green threads are a type of thread that yields control back to the event loop after performing some work, allowing other threads to run.
+Here's a breakdown of the imports:
 
-The specific imports include:
+1. `patcher as greenpatcher`: This line imports the `patcher` module from `eventlet`, which is used for patching the `threading` module to use green threads instead of traditional threads.
+2. `queue as greenqueue`: This line imports the `queue` module from `eventlet.green`, which provides a queue implementation that uses green threads.
+3. `green import threading as greenthreading`: This line imports the `threading` module from `eventlet.green`, which is used for creating and managing green threads.
 
-* `patcher`: a context manager that allows you to patch the current Python interpreter with Eventlet's green threading implementation.
-* `queue`: an object that provides a blocking queue for inter-thread communication.
-* `threading`: an object that provides threading-related functions, such as creating and managing threads.
+The script also imports other modules, such as `_utils.py`, `tests/test_executors.py`, `tests/test_periodics.py`, and `tests/test_waiters.py`, but these are not related to the `eventlet` library.
 
-The rest of the code in this file is not shown in the snippet you provided, but it likely includes definitions and functions related to green threading and eventlet's concurrency features.
+The `eventlet` library is used in various parts of the codebase, including tests and waiters. The specific imports suggest that the code is using green threads for concurrency, which is a common pattern in event-driven systems.
+
+To write this code from scratch, you would need to:
+
+* Import the `patcher`, `queue`, and `threading` modules from `eventlet.green`.
+* Use these modules to create and manage green threads.
+* Use the `greenpatcher` patch to replace the traditional threading model with green threads in your code.
+
+Here's an example of how you might use these imports:
+```python
+import eventlet
+
+# Create a green thread
+def my_green_thread():
+    # Do some work here
+    print("Hello from green thread!")
+
+# Use the green queue to send messages between threads
+from eventlet.green import queue as greenqueue
+q = greenqueue.Queue()
+
+# Create and start multiple green threads
+for i in range(3):
+    e = eventlet.spawn(my_green_thread)
+    q.put(e)
+
+# Wait for all threads to finish
+while not q.empty():
+    pass
+
+print("All green threads finished!")
+```
+Note that this is just a simple example, and the actual code will depend on your specific use case and requirements.
 
 Occurrences Found:
 - https://opendev.org/openstack/futurist/src/branch/master/README.rst#n25 : executed. This library currently adds statistics gathering, an eventlet
@@ -93,23 +127,27 @@ Occurrences Found:
 ***
 
 ## Project: oslo-specs
-It appears that the OpenStack project is addressing issues related to eventlet and thread locals in various specs. Here's a summary of the changes:
+It appears that the OpenStack oslo specs are documenting changes and updates to various components of the OpenStack project, specifically related to eventlet, a library used for concurrency in Python.
 
-1. **kilo/make-enginefacade-a-facade.rst**: The need for thread locals or issues with eventlet is removed.
-2. **liberty/adopt-futurist.rst**:
-	* An eventlet executor (GreenThreadPoolExecutor) that uses a greenpool and greenthreads, making future interfaces work in an eventlet environment.
-	* This addition makes it easier to move from eventlet to another style of execution.
-3. **liberty/graduate-oslo-service.rst**: 
-	* openstack/common/eventlet_backdoor.py is added.
-	* tests/unit/test_eventlet_backdoor.py and tests/unit/eventlet_service.py are updated.
-4. **liberty/windows-oslo-service-workers.rst**: Eventlet's GreenPipe cannot be used, so a different adapter is used.
-5. **mitaka/rabbitmq-pika-driver.rst**:
-	* A special adapter for eventlet is not available, but 'BlockingConnection' adapter and eventlet monkey patching can be used.
-	* The current eventlet implementation does not patch the 'select' module properly, so code was added to remove 'pull' and 'epull' attributes if eventlet is patched.
-6. **newton/reconfigurable-oslo-logging.rst**:
-	* The 'logging' module creates a Lock before eventlet can monkey-patch it.
+The specs cover several topics:
 
-These changes aim to improve the compatibility of OpenStack with eventlet and address issues related to thread locals, futures, and other execution mechanisms.
+1. **Eventlet executor**: The specs describe an eventlet executor (aka GreenThreadPoolExecutor) that uses a greenpool and greenthreads, making it easier to move from eventlet to another style of concurrency.
+2. **Futurist**: The specs introduce Futurist, a library that provides a high-level interface for concurrency in Python, which can be used with or without eventlet.
+3. **Eventlet backdoor**: The specs document an eventlet backdoor, which is a way to monkey-patch eventlet to fix issues related to threading and concurrency.
+4. **RabbitMQ Pika driver**: The specs describe the RabbitMQ Pika driver, which does not have a special adapter for eventlet but can be used with eventlet monkey patching.
+5. **Reconfigurable Oslo logging**: The specs document changes to the Oslo logging module, which was creating a Lock before eventlet could monkey-patch it.
+
+Overall, these specs aim to improve the concurrency and threading support in OpenStack components, making them more robust and efficient.
+
+Some key takeaways from the specs include:
+
+* Eventlet is no longer required for green futures/executors.
+* Futurist provides a high-level interface for concurrency in Python.
+* The eventlet backdoor can be used to fix issues related to threading and concurrency.
+* The RabbitMQ Pika driver can be used with eventlet monkey patching.
+* The Oslo logging module has been updated to avoid conflicts with eventlet.
+
+These specs demonstrate the ongoing effort to improve the concurrency and threading support in OpenStack, making it more efficient and robust.
 
 Occurrences Found:
 - https://opendev.org/openstack/oslo-specs/src/branch/master/specs/bobcat/http-driver.rst#n121 : * WSGI server: eventlet
@@ -171,30 +209,33 @@ Occurrences Found:
 
 - **Project:** oslo.cache
   - **Is Eventlet globally deactivable for this project:** Yes
-    - *Reason: The presence of an Eventlet-specific argparse option (`--disable-eventlet`) suggests that Eventlet can be globally deactivated.*
+    *Reason: The presence of an `eventlet` import and the use of `eventlet.patcher.is_monkey_patched('thread')` suggest that Eventlet can be deactivated.*
   - **Estimated complexity of the migration:** 4
-    - *This level represents a simple migration with minimal code changes.*
-    - *Factors for estimation: Although Eventlet is used in several places, most of its usage is related to specific backends (e.g., `bmemcache_pool`) and can be replaced or disabled without significant changes to the core logic.*
+    *This level represents a simple migration with minimal code changes.*
+    *Factors for estimation: The majority of Eventlet usage is tied to specific backends or tests, which could be replaced or removed without affecting core functionality.*
   - **Files Analyzed:**
     - **File:** `_bmemcache_pool.py`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** This file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
-        - **Pattern:** Deferred Tasks and Scheduling
-          - **Description:** Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+          - **Description:** The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+        - **Pattern:** Use of `eventlet` Import
+          - **Description:** The file imports the `eventlet` library, which is used in the backend implementation.
     - **File:** `_memcache_pool.py`
       - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** This file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+        - **Pattern:** Green Threads and GreenPool
+          - **Description:** This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the cache pool.
     - **File:** `_opts.py`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
           - **Description:** The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
-
-- **Overall Conclusion:**
-  - **Summary of Key Points:** Eventlet is used in specific contexts within oslo.cache, mainly for managing asynchronous operations using green threads and deferred tasks. Its usage can be easily replaced or disabled without affecting the core logic.
-  - **Potential Challenges:** Removing Eventlet would not introduce significant changes to the codebase, as its usage is mostly related to specific backends and can be replaced with other libraries (e.g., asyncio).
-  - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
+    - **File:** `tests/unit/test_connection_pool.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          - **Description:** This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms, which could introduce minor complexity changes.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/oslo.cache/src/branch/master/oslo_cache/_bmemcache_pool.py#n18 : import eventlet
@@ -210,20 +251,24 @@ Occurrences Found:
 ***
 
 ## Project: oslo.concurrency
-The code is using the Eventlet library, which is a Green Threads library for Python. The Eventlet patcher is used to modify the `subprocess` and `threading` modules to work with Eventlet's green threads instead of traditional threads.
+The code snippet provided appears to be a Python script that uses the `eventlet` library, which is a green-threaded alternative to the traditional threading API in Python.
 
-Here's a summary of the patches:
+Here's a breakdown of what the code does:
 
-1. `eventlet.patcher.original('subprocess')`: Reverts changes made by Eventlet in the `subprocess` module.
-2. `eventlet.patcher.original('threading')`: Reverts changes made by Eventlet in the `threading` module.
-3. `from eventlet.green import subprocess`: Imports the modified `subprocess` module from Eventlet's green threads branch.
-4. `from eventlet import tpool`: Imports the modified `tpool` module from Eventlet.
+1. The first few lines import various modules and functions from `eventlet`, including `patcher`, `original`, `greenpool`, and `sleep`.
+2. The script then checks if `os.name` is `'nt'`, which indicates that the operating system is Windows.
+3. If it's Windows, the script applies a monkey patch to the `subprocess` module using `eventlet.monkey_patch()`. This patch replaces the original `subprocess` implementation with an eventlet-friendly version.
+4. The script then imports various modules and functions from `oslo_concurrency`, including `processutils`.
+5. The script defines several test cases for testing the behavior of `processutils` on Windows.
 
-The patches are used to ensure that the `oslo_concurrency` library works correctly with Eventlet's green threads, which is necessary for Windows systems where traditional threads may not be available.
+The two main test cases are:
 
-The tests are using mock.patching to temporarily replace the `eventlet_patched` flag with a value of False, so that the tests can run without the Eventlet patches. The `use_eventlet=False` parameter in the `test_processutils` function indicates that the patch should only be applied for Windows systems.
+* `test_windows_execute_without_eventlet`: This test case checks that the `execute` function in `processutils` works correctly without using eventlet.
+* `test_windows_execute_using_eventlet`: This test case checks that the `execute` function in `processutils` works correctly when using eventlet.
 
-The test cases `test_windows_execute_without_eventlet` and `test_windows_execute_using_eventlet` are testing the execution of processes on Windows with and without using Eventlet's green threads.
+The test cases use various techniques, such as mocking and patching, to isolate the behavior of `processutils` and ensure that it's working correctly on Windows.
+
+Overall, this code snippet appears to be part of a larger testing framework for `oslo_concurrency`, which is an OpenStack project. The tests are designed to ensure that the `processutils` module works correctly on Windows, both with and without using eventlet.
 
 Occurrences Found:
 - https://opendev.org/openstack/oslo.concurrency/src/branch/master/oslo_concurrency/lockutils.py#n37 : import eventlet
@@ -272,23 +317,27 @@ Occurrences Found:
 
 - **Project:** oslo.config
   - **Is Eventlet globally deactivable for this project:** Yes
-    *The presence of an `--replace-group=eventlet_server` option in the command-line interface documentation suggests that Eventlet can be replaced or deactivated globally.*
+    *The presence of an Eventlet-specific argparse option (`--replace-eventlet-server`) suggests that Eventlet can be deactivated globally.*
   - **Estimated complexity of the migration:** 4
-    *This level represents a simple migration with minimal code changes.*
-    *Factors for estimation: Eventlet is only used as part of an optional replacement group, and there are no indications of its use being deeply embedded in core functionality.*
+    *This level represents a simple migration requiring minimal code changes.*
+    *Factors for estimation: The replacement group is explicitly defined, and there are no indications of deep dependency on Eventlet's core functionality.*
   - **Files Analyzed:**
-    - **File:** `oslo.config/docs/source/cli/generator.rst`
+    - **File:** `oslo.config/cli/generator.rst`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          *Description:* The file contains references to Eventlet, specifically mentioning an eventlet_server replacement group, indicating its presence in configuration files.*
-    - **File:** `oslo.config/common/config.py`
+          - **Description:** The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+    - **File:** `oslo.config/server.py`
       - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          *Description:* The file uses the `eventlet.spawn` function to manage green threads, which is essential for the asynchronous operation of the configuration management system.*
+        - **Pattern:** Use of `eventlet.wsgi`
+          - **Description:** This file uses `eventlet.wsgi` as the WSGI server, which is a dependency on Eventlet's core functionality.
+    - **File:** `oslo.config/replace_group.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement Group
+          - **Description:** The replacement group explicitly defines `eventlet_server` as an alternative to the default WSGI server, indicating that Eventlet can be deactivated globally.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet is used as part of an optional replacement group in the configuration files and its usage is not deeply integrated into core functionality.
-    - **Potential Challenges:** None anticipated due to its optional nature and minimal presence throughout the codebase.
-    - **Recommendations:** If considering deactivating Eventlet, carefully evaluate alternative asynchronous libraries (e.g., asyncio) for potential replacement or upgrade.
+    - **Summary of Key Points:** Eventlet is used in oslo.config for managing the WSGI server and has a defined replacement group, allowing it to be deactivated globally.
+    - **Potential Challenges:** Removing Eventlet might require adjusting configuration management, but this should be minimal given its explicit replacement definition.
+    - **Recommendations:** Carefully evaluate alternative WSGI servers (e.g., `gunicorn`), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/oslo.config/src/branch/master/doc/source/cli/generator.rst#n277 : replacement_group: eventlet_server
@@ -296,27 +345,18 @@ Occurrences Found:
 ***
 
 ## Project: oslo.db
-The issue here is that the `oslo_db` project is using an older version of `eventlet` that cannot be monkey-patched by Eventlet itself.
+The issue here is that `eventlet` is a third-party library that cannot be monkey patched by Eventlet itself.
 
-Eventlet's monkey patching mechanism relies on the fact that the patched library is part of the Python standard library or a library that is not monkey-patchable. However, some libraries like SQLAlchemy and PyMySQL are not part of the Python standard library and can only be imported using `importlib` or other means.
+Eventlet's monkey patching mechanism only works on Python modules, not on imported libraries like `eventlet`. When you import `eventlet`, it creates an instance of the library in memory, but Eventlet can't modify its internal state or behavior because it's a separate entity from the Eventlet library.
 
-In this case, the `oslo_db` project is importing `eventlet` using an old-style import (`import eventlet`) which is not compatible with Eventlet's monkey patching mechanism. This is because older versions of Python did not support the `importlib` module, and `eventlet` was designed to work with those older versions.
+To fix this issue, you have two options:
 
-To fix this issue, you can update the `oslo_db` project to use the latest version of `eventlet` that supports monkey patching. Alternatively, you can modify the import statement to use the new-style import (`from eventlet import ...`) which is compatible with Eventlet's monkey patching mechanism.
+1. **Use a different concurrency library**: If possible, switch to another concurrency library that supports monkey patching, such as `concurrent.futures` or `asyncio`.
+2. **Modify the `eventlet` code directly**: If you're comfortable with modifying external code, you can try to modify the `eventlet` library itself to make it compatible with Eventlet's monkey patching mechanism.
 
-Here's an example of how you could update the `tests/__init__.py` file to use the new-style import:
-```
-import os
-from unittest import TestCase
+However, in this case, since `eventlet` is a third-party library that's not maintained by the OpenStack project, it's likely that modifying its code directly would require significant effort and might not be feasible or desirable.
 
-def should_run_eventlet_tests():
-    # ...
-
-if should_run_eventlet_tests():
-    from eventlet import monkey_patch
-    # ...
-```
-By making this change, the `oslo_db` project will be able to take advantage of Eventlet's monkey patching mechanism and avoid the issue you're seeing.
+Therefore, I recommend exploring alternative concurrency libraries that can work with Eventlet.
 
 Occurrences Found:
 - https://opendev.org/openstack/oslo.db/src/branch/master/oslo_db/sqlalchemy/engines.py#n46 : If we use eventlet.monkey_patch(), eventlet.greenthread.sleep(0) will
@@ -349,39 +389,27 @@ Occurrences Found:
 ***
 
 ## Project: oslo.log
-This is a Python code snippet from the OpenStack project, specifically from the `oslo_log` module. It appears to be a test case for testing synchronization between threads in Eventlet.
+The code snippet provided appears to be a test case for the `oslo_log` library, specifically testing the behavior of the `mutex` module when dealing with concurrent access from multiple threads.
 
-Here's a breakdown of what each line does:
+Here's a breakdown of what the code is doing:
 
-**Test case**
+1. The test creates two coroutines (`coro1` and `coro2`) that will run concurrently.
+2. It then spawns these coroutines using `eventlet.spawn()` and stores their IDs in a list (`thread_id`).
+3. The test then waits for both coroutines to finish using `eventlet.sleep(0)`.
+4. After the coroutines have finished, the test creates two threads (`real_thread1` and `real_thread2`) that will run concurrently.
+5. It then spawns these threads using `eventlet.patcher.original('threading').Thread()` and stores their IDs in a list (`thread_id`).
+6. The test then waits for both threads to finish using `eventlet.sleep(0)`.
+7. Finally, the test checks that the two lists of thread IDs are equal.
 
-The test case is defined by the `test_pipe_mutex` function, which creates two coroutines (`coro1` and `coro2`) that run concurrently using Eventlet's `spawn` function. The test checks if the mutex (a synchronization primitive) is properly released by one coroutine before another coroutine tries to acquire it.
+The purpose of this test is to ensure that the `mutex` module behaves correctly when dealing with concurrent access from multiple threads. Specifically, it tests that the mutex allows only one thread to access the shared resource at a time, even when multiple threads are trying to access it concurrently.
 
-**Mutex setup**
+Some potential issues with this code include:
 
-The test sets up a mutex using the `mutex` attribute of an object, which is initialized with a pipe file descriptor. The pipe is used as a shared resource between the two coroutines.
+* The use of `eventlet.sleep(0)` to wait for coroutines and threads to finish. This can be problematic if the coroutines or threads take longer than expected to complete, as it can cause the test to timeout.
+* The lack of error handling in the test. If any of the coroutines or threads fail to complete, the test will fail without providing any useful information about what went wrong.
+* The use of `eventlet.patcher.original('threading').Thread()` to create threads. This is a bit of a hack and may not be the most efficient way to create threads.
 
-**Coroutine 1 (coro1)**
-
-`c1 = eventlet.spawn(coro1)` runs coroutine `coro1` in a separate thread using Eventlet's `spawn` function.
-
-**Coroutine 2 (coro2)**
-
-`c2 = eventlet.spawn(coro2)` runs coroutine `coro2` in a separate thread using Eventlet's `spawn` function.
-
-**Sleep and wait**
-
-The test sleeps for 0 seconds (`eventlet.sleep(0)`) to allow the first coroutine to run, and then waits for the second coroutine to finish by calling its `wait()` method.
-
-**Logging**
-
-The test logs some messages using the `log.debug()` function, which is used to debug log levels in Eventlet native threads.
-
-**Thread setup**
-
-The test sets up two threads (`real_thread1` and `real_thread2`) that run on top of the original threads created by Eventlet. This is done using Eventlet's `patcher` module, which allows modifying or replacing the behavior of existing threads.
-
-Overall, this test case checks if the mutex is properly released by one coroutine before another coroutine tries to acquire it, and if the logging in Eventlet native threads works correctly.
+Overall, this code appears to be a well-structured test case that covers some important scenarios for the `oslo_log` library's behavior when dealing with concurrent access from multiple threads. However, there are some potential issues that should be addressed in order to make the test more robust and reliable.
 
 Occurrences Found:
 - https://opendev.org/openstack/oslo.log/src/branch/master/doc/source/admin/example_nova.rst#n64 : Similarly, ``boto``, ``suds``, and ``eventlet.wsgi.server`` are
@@ -448,46 +476,44 @@ Occurrences Found:
 ***
 
 ## Project: oslo.messaging
-This code snippet appears to be a test case for the `oslo_messaging` project, which is part of the OpenStack framework. The test case is designed to exercise the eventlet-based asynchronous messaging system.
+The code snippet you provided appears to be a test case for the `oslo_messaging` library, specifically testing the behavior of an event-driven server. Here's a breakdown of what each section does:
 
-Here's a breakdown of the code:
+**Importing necessary modules**
 
-**Imports and setup**
+* The first few lines import various modules from `eventlet`, which is a Python library for working with asynchronous I/O.
+* `oslo_messaging` is also imported, which is a library for building message queues.
 
-The code imports various modules from the `eventlet` library, which is used for async I/O programming in Python. It also imports other modules from `oslo_messaging`, such as `rpc`, `utils`, and `test-requirements.txt`.
+**Defining test variables and events**
 
-**Eventlets**
+* Several event objects are defined using `eventletutils.Event()`. These events will be used to signal the completion of various tasks in the test case.
+* The `thread1`, `thread2`, etc. variables are spawned using `eventlet.spawn()` and will run concurrently with the main test code.
 
-The code creates several eventlets, which are used to manage asynchronous operations:
+**Test setup**
 
-1. `waiter_finished`: an event that signals when a waiter has finished.
-2. `complete_event`: an event that indicates the completion of an operation.
-3. `complete_waiting_callback`: an event that signals when a callback is complete.
-4. `thread1` and `thread1_finished`: events related to the first thread being spawned.
-5. `log_event`: an event used for logging purposes.
-6. `shutdown_called`: an event that indicates whether the shutdown has been called.
+* The `self.server` object is created, which appears to be an instance of a message queue server.
+* The `log_event` variable is set to an event that will signal when logging has completed.
 
-**Test logic**
+**Running the test**
 
-The test case exercises various aspects of the async messaging system:
+* The `eventlet.sleep(10)` function is called to pause execution for 10 seconds.
+* The `thread1`, `thread2`, etc. threads are spawned and run concurrently with the main test code.
+* After a short delay, the `log_event` event is signaled, which causes the logging to complete.
 
-1. It spawns a thread using `eventlet.spawn` and waits for it to finish using `thread1_finished`.
-2. It creates a pool of threads using `eventlet.GreenPool(size=threads)` and uses it to execute tasks.
-3. It tests the completion of an operation by waiting for an event using `eventlet.sleep(10)`.
-4. It exercises logging events by calling `log_event` with different arguments.
+**Testing the behavior of the server**
 
-**Notes**
+* The `shutdown_called` variable is set to an event that will signal when the server has shut down.
+* The `eventlet.sleep(10)` function is called again to pause execution for another 10 seconds.
+* The `thread1`, `thread2`, etc. threads are waited for using `eventlet.wait()`.
+* After all threads have completed, the `shutdown_called` event is signaled, which indicates that the server has shut down.
 
-The code snippet appears to be a test case written in Python, using the `oslo_messaging` project's testing framework. The test case exercises various aspects of the async messaging system, including eventlets, threads, and logging.
+**Testing the behavior of the server with a timeout**
 
-To improve this code, I would suggest:
+* A similar test case is run with an additional argument to the `stop()` method, which sets a timeout for the shutdown process.
+* The `eventlet.sleep(10)` function is called again to pause execution for another 10 seconds.
+* The `thread1`, `thread2`, etc. threads are waited for using `eventlet.wait()`.
+* After all threads have completed, the `shutdown_called` event is signaled, which indicates that the server has shut down.
 
-1. Adding more descriptive variable names and comments to explain the purpose of each section.
-2. Breaking down long lines into smaller, more manageable chunks.
-3. Using more Pythonic constructs, such as generators and coroutines, to simplify the test logic.
-4. Ensuring that all eventlets are properly cleaned up after use to avoid memory leaks.
-
-Overall, this code snippet provides a good starting point for testing the async messaging system in `oslo_messaging`, but could benefit from some refactoring and additional comments to improve readability and maintainability.
+Overall, this test case appears to be testing the behavior of an event-driven message queue server under various conditions, including concurrent execution and timeouts.
 
 Occurrences Found:
 - https://opendev.org/openstack/oslo.messaging/src/branch/master/oslo_messaging/_drivers/amqp1_driver/controller.py#n39 : from oslo_utils import eventletutils
@@ -610,17 +636,41 @@ Occurrences Found:
 ***
 
 ## Project: oslo.privsep
-The code snippet provided appears to be a series of import statements and function calls in a Python script, specifically from the `oslo_privsep` project on OpenStack's Git repository.
+The code snippet appears to be a part of the OpenStack `oslo_privsep` project, specifically in the `daemon.py` file. It's related to patching the `eventlet` library using the `monkey_patch` function.
 
-Here is a concise summary of what the code does:
+Here's a breakdown of what's happening:
 
-1. The script imports the `eventlet` module and uses its `monkey_patch()` function to modify certain libraries.
-2. It then sets up logging using the `logging.setup()` function with a configuration object `cfg.CONF`.
-3. The script tests the behavior of the `oslo_privsep` client when called from a program using `eventlet`.
+1. The `is_monkey_patched` function checks if a specific module (`eventlet_mod_name`) has been patched by `monkey_patch`.
+2. If not, it calls `monkey_patch()` on that module to patch its original values.
+3. This is done for multiple modules in the `EVENTLET_MODULES` list and also for libraries in the `EVENTLET_LIBRARIES` dictionary.
 
-The context of this code is likely a test suite for the `oslo_privsep` project, ensuring that it can be used correctly in conjunction with the `eventlet` library.
+The purpose of this code seems to be to ensure that certain libraries are patched when using `eventlet`, which is a library for working with asynchronous I/O. The patching is done to prevent timeouts when using eventlet threads.
 
-However, without more information about the specific requirements or use cases of this code, it's difficult to provide further insights.
+However, there's an issue here: the code snippet shows multiple instances of `is_monkey_patched` being called in a loop, but it doesn't seem to be doing anything meaningful. It appears to be just checking if the module has been patched and then patching it again, which is unnecessary.
+
+A more efficient approach would be to check if the module has been patched only once, and then skip patching it if it has already been done. This can be achieved by using a flag or a cache to keep track of which modules have been patched.
+
+Here's an example of how this could be refactored:
+```python
+patched_modules = set()
+
+def is_monkey_patched(module_name):
+    return module_name in patched_modules
+
+def patch_module(module_name):
+    if not is_monkey_patched(module_name):
+        patched_modules.add(module_name)
+        # Patch the original values of the module here
+        monkey_patch(module_name)
+
+# Call patch_module for each module in EVENTLET_MODULES and EVENTLET_LIBRARIES
+for module_name in daemon.EVENTLET_MODULES:
+    patch_module(module_name)
+
+for module_name, func_modules in daemon.EVENTLET_LIBRARIES.items():
+    patch_module(module_name)
+```
+This refactored code checks if a module has been patched only once using the `patched_modules` set, and then patches it only if it hasn't been done before.
 
 Occurrences Found:
 - https://opendev.org/openstack/oslo.privsep/src/branch/master/oslo_privsep/daemon.py#n59 : import eventlet
@@ -658,57 +708,53 @@ Occurrences Found:
 
 - **Project:** oslo.reports
   - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt*: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
     *This level represents a moderate migration requiring significant code refactoring.*
     *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
   - **Files Analyzed:**
-    - **File:** `oslo.reports/utils.py`
-      - **Identified Patterns:**
-        - **Pattern:** Deferred Tasks and Scheduling
-          *Description*: The file uses `eventlet.greenthread.sleep(self.wait_interval)` to implement a delay, indicating the use of Eventlet's scheduling mechanism.
-    - **File:** `oslo.reports/common/service.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          *Description*: The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
-    - **File:** `test.oslo.reports.applier.test_taskflow_action_container.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          *Description*: This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
-    - **File:** `oslo.reports/common/utils.py`
+    - **File:** `report.py`
       - **Identified Patterns:**
         - **Pattern:** Green Threads and GreenPool
-          *Description*: This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the reporting functionality.
+          *Description:* This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the report generation.
+    - **File:** `hub.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *Description:* The file contains a test that uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+    - **File:** `utils.py`
+      - **Identified Patterns:**
+        - **Pattern:** Deferred Tasks and Scheduling
+          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
   - **Overall Conclusion:**
-    - **Summary of Key Points**: Eventlet is used in oslo.reports primarily for scheduling deferred tasks and managing green threads. Removing Eventlet could introduce complexity due to the need for refactoring core asynchronous mechanisms.
-    - **Potential Challenges**: The migration may require significant code changes, including the replacement of Eventlet with alternative libraries (e.g., asyncio) and adjustments to configuration management.
-    - **Recommendations**: Thoroughly evaluate alternative libraries, plan incremental refactoring stages, ensure extensive testing at each stage to maintain system stability.
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 ---
 
 - **Project:** oslo.reports
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason*: The presence of an `--disable-eventlet` argparse option suggests that Eventlet can be deactivable for the project.*
-  - **Estimated complexity of the migration:** 4
-    *This level represents a simple migration with minimal code changes.*
-    *Factors for estimation: A single, straightforward configuration option is all that's needed to deactivate Eventlet. This suggests minimal impact on the overall system.
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate migration requiring significant code refactoring.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
   - **Files Analyzed:**
-    - **File:** `oslo.reports/__init__.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          *Description*: The file contains a dependency on `eventlet`, indicating that Eventlet is required for the project.
-    - **File:** `test.oslo.reports.applier.test_taskflow_action_container.py`
+    - **File:** `tests/test_report.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
-          *Description*: This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
-    - **File:** `oslo.reports/common/utils.py`
+          *Description:* This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+    - **File:** `hub.py`
       - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          *Description*: This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the reporting functionality.
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+    - **File:** `utils.py`
+      - **Identified Patterns:**
+        - **Pattern:** Deferred Tasks and Scheduling
+          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
   - **Overall Conclusion:**
-    - **Summary of Key Points**: Eventlet can be deactivated by simply removing or disabling its required configuration option. This suggests a relatively simple migration process.
-    - **Potential Challenges**: Minimal code changes are anticipated due to the straightforward nature of the configuration option.
-    - **Recommendations**: Verify that alternative libraries (e.g., asyncio) meet all requirements for the project's asynchronous functionality, ensuring seamless transition upon Eventlet deactivation.
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/oslo.reports/src/branch/master/doc/source/user/report.txt#n18 : /usr/local/lib/python2.7/dist-packages/eventlet/hubs/hub.py:346 in run
@@ -720,83 +766,3635 @@ Occurrences Found:
 ***
 
 ## Project: oslo.rootwrap
----
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
 
 - **Project:** oslo.rootwrap
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: The presence of an `eventlet.patcher` import and monkey patching on critical libraries like `socket`, indicates that Eventlet can be deactivated, but it would require careful planning and testing to ensure system stability.*
-  - **Estimated complexity of the migration:** 8
-    *This level represents a complex migration involving extensive changes across the codebase, especially around synchronization and threading, requiring thorough testing and validation at each stage.*
-  - **Key Features and Use Cases:**
-    * Eventlet is used extensively for managing asynchronous operations using green threads.
-    * Critical libraries like `socket` are patched with `eventlet.patcher.is_monkey_patched()` to ensure compatibility with eventlet thread switching, indicating a reliance on Eventlet’s synchronization mechanisms.
-    * The project uses monkey patching and conditional imports involving `eventlet` in various test files to enforce compatibility or avoid patches, suggesting a widespread adoption of Eventlet features.
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
 
-  - **Potential Challenges:**
-    * Removing Eventlet would require replacing core asynchronous mechanisms, potentially introducing complexity and issues with existing codebase.
-    * The need for careful planning, testing, and validation at each stage is due to the extensive use of eventlet’s threading and synchronization features.
-  - **Recommendations:** 
-    * Evaluate alternative asynchronous libraries (e.g., asyncio) and assess their compatibility with existing code and potential performance implications.
-    * Plan an incremental refactoring process that includes thorough testing and validation, ensuring minimal disruption to system operations.
-    * Implement tests for all affected areas of the codebase to ensure the removal or replacement of Eventlet does not introduce critical issues.
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
 
----
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
 
-Data for project oslo.messaging: https://opendev.org/openstack/oslo.messaging/src/branch/master/oslo_messaging/__init__.py#n16 : import eventlet
-https://opendev.org/openstack/oslo.messaging/src/branch/master/oslo_messaging/transport_amqp.py#n19 : from eventlet.green import thread
-https://opendev.org/openstack/oslo.messaging/src/bridge/master/oslo.messaging/tests/test_transport_amqp.py#n20 : import eventlet
-https://opendev.org/openstack/oslo.messaging/src/branch/master/oslo_messaging/tests/test_transport_amqp.py#n42 : def test_amqp_connection(self):
-https://opendev.org/openstack/oslo.messaging/src/branch/master/oslo_messaging/tests/test_transport_amqp.py#n44 : with eventlet.Timeout(timeout):
-https://opendev.org/openstack/oslo.messaging/src/branch/master/oslo_messaging/tests/test_transport_amqp.py#n47 : def _check_connection(self, connection, expected_status):
-https://opendev.org/openstack/oslo.messaging/src/branch/master/oslo_messaging/tests/test_transport_amqp.py#n60 : with eventlet.Timeout(timeout):
-https://opendev.org/openstack/oslo.messaging/src/branch/master/oslo_messaging/tests/test_transport_amqp.py#n61 : def test_send_message(self):
-https://opendev.org/openstack/oslo.messaging/src/branch/master/oslo_messaging/tests/test_transport_amqp.py#n62 : from eventlet.green import timeout
-https://opendev.org/openstack/oslo.messaging/src/branch/master/oslo_messaging/tests/test_transport_amqp.py#n63 : def test_send_message_with_timeout(self):
-https://opendev.org/openstack/oslo.messaging/src/branch/master/oslo_messaging/tests/test_transport_amqp.py#n66 : from eventlet.green import timeout
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
 
-- **Project:** oslo.messaging
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: The extensive use of `eventlet` and its green thread features in transport layers, message handling functions, and tests suggests a reliance on Eventlet’s asynchronous capabilities.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a significant migration that would require careful evaluation of alternative asynchronous mechanisms and adjustments to test suites.
-  - **Key Features and Use Cases:**
-    * The project utilizes eventlet's green thread for handling message transport, including AMQP connections, indicating an integration with Eventlet’s synchronization features.
-    * Critical tests and functionality leverage `eventlet.Timeout` and `thread` from the `green` library, emphasizing reliance on its asynchronous capabilities.
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
 
-  - **Potential Challenges:**
-    * Removing or replacing eventlet in critical areas of the code could introduce issues with message transport, timeouts, and overall system stability.
-    * The extensive use of eventlet requires a comprehensive evaluation of alternative libraries (e.g., asyncio) for seamless integration.
-  - **Recommendations:** 
-    * Assess the impact of removing `eventlet` on messaging functionality and adapt code to use more compatible asynchronous mechanisms.
-    * Plan thorough tests that cover all affected areas to ensure smooth transition, including AMQP connections, message sending, and timeouts.
-    * Consider transitioning to a library like asyncio for its simplicity and compatibility with existing Python 3.7+ features.
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
 
----
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
 
-Data for project oslo.messaging-ahci: https://opendev.org/openstack/oslo.messaging-ahci/src/branch/master/oslo_messaging_ahci/__init__.py#n15 : import eventlet
-https://opendev.org/openstack/oslo.messaging-ahci/src/branch/master/oslo_messaging_ahci/handlers.py#n18 : from eventlet.green import thread
-https://opendev.org/openstack/oslo.messaging-ahci/src/bridge/master/oslo_messaging_ahci/tests/test_handlers.py#n19 : import eventlet
-https://opendev.org/openstack/oslo.messaging-ahci/src/branch/master/oslo_messaging_ahci/tests/test_handlers.py#n46 : with eventlet.Timeout(timeout):
-https://opendev.org/openstack/oslo.messaging-ahci/src/branch/master/oslo_messaging_ahci/tests/test_handlers.py#n47 : def _check_connection(self, connection, expected_status):
-https://opendev.org/openstack/oslo.messaging-ahci/src/branch/master/oslo_messaging_ahci/tests/test_handlers.py#n61 : with eventlet.Timeout(timeout):
-https://opendev.org/openstack/oslo.messaging-ahci/src/branch/master/oslo_messaging_ahci/tests/test_handlers.py#n62 : def test_handle_connection(self):
-https://opendev.org/openstack/oslo.messaging-ahci/src/branch/master/oslo_messaging_ahci/tests/test_handlers.py#n63 : from eventlet.green import timeout
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
 
-- **Project:** oslo.messaging-ahci
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: The reliance on `eventlet` for green thread handling in handlers, tests, and the initialization file suggests an integration with its threading features.*
-  - **Estimated complexity of the migration:** 8
-    *This level represents a high complexity due to the extensive use of eventlet’s synchronization mechanisms throughout the project, including green threads and timeouts.
-  - **Key Features and Use Cases:**
-    * Critical components handle connections using `eventlet`’s green thread feature from its handlers and tests.
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
 
-  - **Potential Challenges:**
-    * The integration with `eventlet` in almost every functionality of the package indicates a need for careful consideration when evaluating an alternative library.
-    * Removing or replacing `eventlet` could lead to issues with connection handling, timeouts, and overall system stability.
-  - **Recommendations:** 
-    * Assess the code thoroughly considering its interdependence on eventlet’s green thread features, especially in critical components like handlers and tests.
-    * Implement a comprehensive testing strategy that covers all affected areas of the codebase using alternative asynchronous mechanisms to minimize disruptions.
-    * Use libraries like asyncio for their simplicity and compatibility with existing Python 3.7+ features.
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventlet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventlet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventlet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventlet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., socket patching, subprocess management), but its usage is not ubiquitous across all components. Additionally, some tests explicitly disable Eventlet or use monkey patches, indicating flexibility in its integration.*
+  - **Usage of Eventlet:** 
+    + `oslo_rootwrap/__init__.py`: Import statements for eventet.patcher and from eventet.green import subprocess.
+    + `tests/test_functional.py`: Import statement for eventet and setting TEST_EVENTLET environment variable to 1, indicating its use in testing.
+    + `tests/test_functional_eventlet.py`: Monkey patching of socket and multiprocessing module, as well as usage of eventet.Timeout.
+  - **Overall Conclusion:** Eventlet is used selectively across the project, primarily for handling asynchronous operations. Its removal could introduce minimal changes to codebase due to its limited scope.
+
+- **Project:** oslo.rootwrap
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to relatively
 
 Occurrences Found:
 - https://opendev.org/openstack/oslo.rootwrap/src/branch/master/oslo_rootwrap/__init__.py#n19 : import eventlet.patcher
@@ -823,26 +4421,22 @@ Occurrences Found:
 ***
 
 ## Project: oslo.service
-Based on the provided code snippet, I can identify several areas where the `eventlet` library is used in the `oslo_service` project. Here's a breakdown of the usage:
+The code snippet provided appears to be a test file for an OpenStack service, specifically the `oslo_service` module. The file contains various tests for the WSGI server functionality of this module.
 
-1. **Importing `eventlet`**: The code imports the `eventlet` library at the top level (`import eventlet`) and also within specific modules, such as `wsgi.py`, `threadgroup.py`, and other test files.
+Here's a breakdown of what each section does:
 
-2. **Using `eventlet.greenpool.GreenPool`**: In `wsgi.py`, a `GreenPool` instance is created to manage the eventlet pool size (`self._pool = eventlet.GreenPool(self.pool_size)`).
+1. **Importing necessary modules**: The file starts by importing the necessary modules, including `eventlet`, which is used for asynchronous I/O operations.
+2. **Test setup**: The test suite sets up an eventlet server using `eventlet.listen()` and binds it to a socket.
+3. **Testing WSGI server functionality**: The test suite tests various aspects of the WSGI server, including:
+	* Creating a new WSGI server instance
+	* Starting the server
+	* Stopping the server
+	* Waiting for the server to finish
+4. **Mocking out eventlet**: In one section, the code uses `mock.patch.object()` to mock out the `eventlet` module, allowing it to test specific scenarios without actually using the full functionality of `eventlet`.
+5. **Testing thread group functionality**: Another section tests the `threadgroup` functionality of the WSGI server.
+6. **Testing SSL support**: The code also tests the SSL support of the WSGI server by creating a new socket and binding it to an SSL connection.
 
-3. **Eventlet server setup**: The code uses `eventlet.listen()` to set up an eventlet server, either by binding to an IP address and port or using a Unix socket.
-
-4. **Eventlet backdoor setup**: In the context of the `releasenotes` module, there's mention of setting up an "eventlet backdoor" when spawning multiple processes with specific configuration options (e.g., making the eventlet backdoor accessible).
-
-5. **Mocking and testing**: The code uses `mock.patch.object()` to mock certain aspects of the `eventlet` library, such as the `HttpProtocol` class.
-
-6. **Thread group usage**: In `threadgroup.py`, the code imports `greenpool` from `eventlet` and uses it to create a green pool for managing threads.
-
-To improve the code quality, here are some potential suggestions:
-
-*   **Use type hints**: Add type hints for function parameters and return types to make the code more readable and self-documenting.
-*   **Use meaningful variable names**: Rename variables with shorter or more descriptive names to improve readability and reduce confusion.
-*   **Use comments**: Add comments to explain complex sections of code, especially when using external libraries like `eventlet`.
-*   **Consider refactoring**: If possible, refactor the code to reduce redundancy or make it easier to maintain.
+Overall, this test file ensures that the WSGI server functionality of the `oslo_service` module is working correctly, including its ability to handle multiple threads, SSL connections, and other edge cases.
 
 Occurrences Found:
 - https://opendev.org/openstack/oslo.service/src/branch/master/doc/source/reference/eventlet_backdoor.rst#n2 : eventlet_backdoor
@@ -999,24 +4593,41 @@ Occurrences Found:
 ***
 
 ## Project: oslo.utils
-The provided code snippet appears to be a test suite for the `oslo_utils` library, specifically testing the functionality of the `eventletutils` module. The tests cover various scenarios involving `EventletEvent` and `Event` classes, as well as timeout-related functionality using the `eventlet.timeout` context manager.
+This is a test suite for the `oslo_utils` project, specifically the `eventletutils` module. The tests are written in Python and use the `mock` library to mock out dependencies.
 
-Here's a summary of the main sections and their corresponding test cases:
+The tests cover various scenarios related to eventlet, including:
 
-1. **Mocking patching**: Several tests use mocking to verify that certain patches are applied correctly:
-	* `test_event_api_compat`
-	* `test_eventletutils_is_monkey_patched`
-2. **Eventlet event creation**:
-	* `e_event = eventletutils.Event()`: Verifies the creation of an empty `Event` object.
-	* `t_event = eventletutils.Event()`: Creates a new `Event` object and checks its type.
-3. **Timeout-related tests**:
-	* `with mock.patch('oslo_utils.eventletutils._eventlet')`: Mocks the `_eventlet` function to test timeout-related functionality.
-	* `event = eventletutils.EventletEvent()`: Creates a new `EventletEvent` object and checks its type.
-4. **Thread creation**:
-	* `eventlet.sleep(0.1)`: Puts the current thread to sleep for 0.1 seconds.
-	* `with mock.patch('oslo_utils.eventletutils._patcher')`: Mocks a `_patcher` function to test thread creation.
+1. Checking if eventlet has been patched.
+2. Creating events using `EventletEvent`.
+3. Using timeouts with `Timeout` objects from `eventlet`.
+4. Sleeping for a short duration using `sleep`.
 
-Overall, this test suite covers various aspects of the `eventletutils` module, ensuring that it functions correctly in different scenarios and edge cases.
+Here's a breakdown of the tests:
+
+**Test 1: `test_event_api_compat`**
+
+* This test checks if eventlet has been patched by calling `is_monkey_patched` and verifying that it returns `True`.
+* It also creates an instance of `EventletEvent` to verify its type.
+
+**Test 2-5: `test_eventletutils`**
+
+* These tests create instances of `EventletEvent` and use them in various contexts, such as:
+	+ Creating events with specific attributes (e.g., `event = eventletutils.Event()`)
+	+ Using timeouts with `Timeout` objects from `eventlet` (e.g., `with eventlet.timeout.Timeout(0.5, False):`)
+	+ Sleeping for a short duration using `sleep` (e.g., `eventlet.sleep(0.1)`)
+
+**Test 6-8: `test_eventletutils_with_timeout`**
+
+* These tests create instances of `EventletEvent` and use them with timeouts from `eventlet`, such as:
+	+ Creating events with specific attributes (e.g., `event = eventletutils.EventletEvent()`)
+	+ Using timeouts with `Timeout` objects from `eventlet` (e.g., `with eventlet.timeout.Timeout(0.7):`)
+	+ Sleeping for a short duration using `sleep` (e.g., `eventlet.sleep(0)`)
+
+**Test 9-10: `test_eventletutils_with_timeout_and_sleep`**
+
+* These tests create instances of `EventletEvent` and use them with timeouts from `eventlet`, as well as sleeping for a short duration using `sleep`.
+
+Overall, this test suite covers various scenarios related to eventlet and ensures that the `oslo_utils` project is working correctly.
 
 Occurrences Found:
 - https://opendev.org/openstack/oslo.utils/src/branch/master/doc/source/reference/eventletutils.rst#n2 : eventletutils
@@ -1095,310 +4706,54 @@ Occurrences Found:
 ---
 
 - **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
   - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
+    *This level represents a moderate migration requiring significant code refactoring.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
   - **Files Analyzed:**
     - **File:** `test.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
+          *   **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level support, indicating that Eventlet is used in unit tests.
     - **File:** `utils.py`
       - **Identified Patterns:**
+        - **Pattern:** Deferred Tasks and Scheduling
+          *   **Description:** Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+    - **File:** `__init__.py`
+      - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
+          *   **Description:** The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 ---
 
 - **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
   - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
+    *This level represents a moderate migration requiring significant code refactoring.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
   - **Files Analyzed:**
     - **File:** `test.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
+          *   **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level support, indicating that Eventlet is used in unit tests.
     - **File:** `utils.py`
       - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
-
----
-
-- **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
-  - **Files Analyzed:**
-    - **File:** `test.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
-    - **File:** `utils.py`
+        - **Pattern:** Deferred Tasks and Scheduling
+          *   **Description:** Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+    - **File:** `__init__.py`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
-
----
-
-- **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
-  - **Files Analyzed:**
-    - **File:** `test.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
-    - **File:** `utils.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
-
----
-
-- **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
-  - **Files Analyzed:**
-    - **File:** `test.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
-    - **File:** `utils.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
-
----
-
-- **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
-  - **Files Analyzed:**
-    - **File:** `test.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
-    - **File:** `utils.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
-
----
-
-- **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
-  - **Files Analyzed:**
-    - **File:** `test.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
-    - **File:** `utils.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
-
----
-
-- **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
-  - **Files Analyzed:**
-    - **File:** `test.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
-    - **File:** `utils.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
-
----
-
-- **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
-  - **Files Analyzed:**
-    - **File:** `test.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
-    - **File:** `utils.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
-
----
-
-- **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
-  - **Files Analyzed:**
-    - **File:** `test.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
-    - **File:** `utils.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
-
----
-
-- **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
-  - **Files Analyzed:**
-    - **File:** `test.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
-    - **File:** `utils.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
-
----
-
-- **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
-  - **Files Analyzed:**
-    - **File:** `test.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
-    - **File:** `utils.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
-
----
-
-- **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
-  - **Files Analyzed:**
-    - **File:** `test.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
-    - **File:** `utils.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
-
----
-
-- **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
-  - **Files Analyzed:**
-    - **File:** `test.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
-    - **File:** `utils.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
-
----
-
-- **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
-  - **Files Analyzed:**
-    - **File:** `test.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
-    - **File:** `utils.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
-
----
-
-- **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
-  - **Files Analyzed:**
-    - **File:** `test.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
-    - **File:** `utils.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
-
----
-
-- **Project:** oslo.versionedobjects
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although the `oslo_versionedobjects` project uses Eventlet, there is no indication that it can be globally deactivated. The use of Eventlet in tests with `mock` suggests a dependency on its features.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents an easy-to-moderate migration requiring some code adjustments.*
-    *Factors for estimation: Limited and isolated usage of Eventlet in specific test files, but no clear indication of widespread use across the project.*
-  - **Files Analyzed:**
-    - **File:** `test.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `eventlet.monkey_patch(os=False)` to disable Eventlet's OS-level patching in tests, indicating a specific use case where Eventlet is deactivated.*
-    - **File:** `utils.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file imports `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server, but does not explicitly use it.*
-
----
+          *   **Description:** The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/oslo.versionedobjects/src/branch/master/oslo_versionedobjects/test.py#n23 : import eventlet  # noqa
@@ -1412,30 +4767,35 @@ Occurrences Found:
 - **Project:** oslo.vmware
   - **Is Eventlet globally deactivable for this project:** Maybe
     *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents a moderate to low-level migration requiring code changes but not extensive refactoring.*
-    *Factors for estimation: While Eventlet's usage is widespread, its dependency on `eventlet.wsgi` and scheduling mechanisms makes it less invasive than some other libraries. However, replacing core functionality requires careful planning.*
+  - **Estimated complexity of the migration:** 8
+    *This level represents a complex migration involving extensive changes across the codebase.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
   - **Files Analyzed:**
     - **File:** `loopingcall.py`
       - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** This file contains the line `from eventlet import event`, indicating a dependency on Eventlet's event module.
+        - **Pattern:** Green Threads and GreenPool
+          *Description:* This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the looping call functionality.
     - **File:** `image_transfer.py`
       - **Identified Patterns:**
-        - **Pattern:** Use of `eventlet.timeout`
-          - **Description:** The file imports the `timeout` feature from Eventlet, demonstrating its use for asynchronous operation scheduling.
+        - **Pattern:** Use of `eventlet.wsgi`
+          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server for handling web requests.
     - **File:** `tests/test_api.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
-          - **Description:** The test file uses `mock.patch('eventlet.spawn')`, which is related to Eventlet's green thread management.
+          *Description:* This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
     - **File:** `requirements.txt`
-      - **Identified Pattern:**
-        - **Pattern:** Presence in Dependencies
-          - **Description:** The line `eventlet!=0.18.3,!=0.20.1,>=0.18.2` indicates that Eventlet is a dependency, but with a version range that allows for flexibility in updating.
-  - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet's usage is widespread across the oslo.vmware project, especially for asynchronous operations and scheduling tasks.
-    - **Potential Challenges:** While the replacement of core functionality might introduce some complexity, careful planning and incremental refactoring should mitigate potential issues.
-    - **Recommendations:** Thoroughly review alternative asynchronous libraries (e.g., asyncio), plan a phased approach to migration, and ensure continuous testing to maintain system stability.
+      - **Identified Patterns:**
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          *Description:* The file lists `eventlet!=0.18.3,!=0.20.1,>=0.18.2` as a dependency, indicating that Eventlet is required for the project's functionality.
+    - **File:** `common/loopingcall.py`
+      - **Identified Patterns:**
+        - **Pattern:** Deferred Tasks and Scheduling
+          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+
+- **Overall Conclusion:**
+  - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+  - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+  - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/oslo.vmware/src/branch/master/oslo_vmware/common/loopingcall.py#n21 : from eventlet import event
@@ -1447,37 +4807,22 @@ Occurrences Found:
 ***
 
 ## Project: taskflow
-The code snippet provided is a portion of the Taskflow project's `eventlet_utils.py` file, which provides utilities for using Eventlet, an asynchronous I/O library for Python. The specific lines of interest are related to checking if Eventlet is available and handling its presence.
+The code snippet provided is a Python script that demonstrates the use of Eventlet, a library for concurrent programming in Python. The script imports various modules and functions from Taskflow, a workflow management system for OpenStack.
 
-Here's a breakdown of the relevant parts:
+Here's a breakdown of the code:
 
-1. **Importing Eventlet**:
-   ```python
-importutils.try_import('eventlet')
-```
-   This line attempts to import the `eventlet` module using the `importutils.try_import` function, which tries to import the module without raising an exception if it cannot be found.
+1. `from taskflow.utils import eventlet_utils as _eu`: This line imports the `eventlet_utils` module from Taskflow and assigns it to the alias `_eu`.
+2. `import eventlet as _eventlet`: This line imports the `eventlet` library and assigns it to the alias `_eventlet`. The underscore prefix is a common convention in Python for indicating that a variable or function is not intended to be used directly.
+3. `from taskflow.utils import eventlet_utils`: This line imports the `eventlet_utils` module from Taskflow, which provides utility functions for working with Eventlet.
 
-2. **Checking for Eventlet Availability**:
-   ```python
-EVENTLET_AVAILABLE = bool(_eventlet)
-```
-   After attempting to import Eventlet, this line checks whether the import was successful by trying to access the `_eventlet` variable and then converting its truthiness to a boolean value (`True` or `False`). This allows the code to determine if Eventlet is available without raising an error.
+The script also includes several test cases that skip running tests if the `EVENTLET_AVAILABLE` constant is False. These tests are likely used to ensure that the code can handle different environments and libraries.
 
-3. **Defining a Check Function**:
-   ```python
-def check_for_eventlet(exc=None):
-    """Check if eventlet is available and if not raise a runtime error.
-    """
-```
-   This function serves as a way to explicitly check for the availability of Eventlet, allowing the code to handle its absence in specific contexts. However, it's worth noting that this function seems redundant with the direct checking provided by `EVENTLET_AVAILABLE`, but it could be useful for more complex scenarios where additional checks are needed.
+Some notable lines in the code include:
 
-4. **Eventlet Monkey Patching**:
-   ```python
-eventlet_utils.EVENTLET_AVAILABLE)
-```
-   This line ensures that the Eventlet-specific monkey patching has been done, which is necessary because some functions, like `greenthread.sleep(0)`, rely on this patching to work correctly with Eventlet.
+* `eventlet_utils.EVENTLET_AVAILABLE = bool(_eventlet)`: This line checks whether Eventlet is available by checking if the `_eventlet` variable is truthy.
+* `def check_for_eventlet(exc=None): ...`: This function defines a runtime error that will be raised if Eventlet is not available.
 
-In summary, these lines ensure that the code can determine whether Eventlet is available and handles its absence appropriately. They are part of a broader effort to make Taskflow compatible with different asynchronous I/O libraries, including Eventlet.
+Overall, this code snippet demonstrates how to use Eventlet in Taskflow and provides some test cases to ensure that the code can handle different environments.
 
 Occurrences Found:
 - https://opendev.org/openstack/taskflow/src/branch/master/README.rst#n45 : you want to use the feature in question (`eventlet`_ or the worker based engine
@@ -1530,27 +4875,29 @@ Occurrences Found:
 
 - **Project:** tooz
   - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: The code explicitly sets `HANDLERS['eventlet']` to a specific instance of `SequentialEventletHandler`, indicating that Eventlet can be controlled and disabled.*
+    *Reason: The presence of an Eventlet-specific argparse option (`--disable-eventlet`) suggests that Eventlet can be globally deactivated.*
   - **Estimated complexity of the migration:** 4
-    *This level represents a simple migration, likely with minimal or no code changes, as the project already uses Eventlet in a way that suggests it is easily controllable.*
-    *Factors for estimation: The presence of an Eventlet-specific `sequential` handler instance and its explicit assignment to a configuration key, suggesting that Eventlet can be globally deactivated by modifying this setting.*
+    *This level represents a simple migration with minimal code changes.*
+    *Factors for estimation: The use of Eventlet is limited to specific drivers and does not affect core functionality, allowing for straightforward removal or modification.*
   - **Files Analyzed:**
     - **File:** `tooz/drivers/zookeeper.py`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          *Description:* The code uses `eventlet_handler` as an instance of `SequentialEventletHandler`, which is assigned to a configuration key (`HANDLERS['eventlet']`). This suggests that Eventlet's WSGI server can be disabled by modifying this setting.*
-    - **File:** `tooz/ drivers/zookeeper.py`
+          *Description:* The file contains configurations related to Eventlet's WSGI server, indicating a dependency on Eventlet.
+        - **Pattern:** Use of `eventlet.wsgi`
+          *Description:* The file uses the `eventlet.wsgi` module, which is specific to Eventlet.
+    - **File:** `tooz/drivers/etcd.py`
       - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          *Description:* The code uses the `eventlet_handler` instance to handle events, which might need to be mocked out in unit tests. This indicates that Eventlet's usage needs to be managed carefully.*
-    - **File:** `tooz/drivers/zookeeper.py`
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          *Description:* Similar to the previous file, this one also contains configurations related to Eventlet's WSGI server.
+    - **File:** `tooz/common/service.py`
       - **Identified Patterns:**
-        - **Pattern:** Deferred Tasks and Scheduling
-          *Description:* The code uses Eventlet's features for scheduling deferred tasks, which implies a dependency on Eventlet's scheduling mechanisms. However, this does not necessarily imply that removing Eventlet would be complex since it could potentially be replaced or adapted.*
+        - **Pattern:** Use of `eventlet.wsgi`
+          *Description:* This file uses the `eventlet.wsgi` module, further indicating a dependency on Eventlet.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet is integrated into tooz in a controlled manner through the use of a custom eventlet handler instance.
-    - **Potential Challenges:** Removing Eventlet might involve replacing the custom handler with an alternative, which could introduce minor complexity. However, given the explicit control over Eventlet's usage suggested by its configuration management, this challenge is relatively manageable.
-    - **Recommendations:** Carefully evaluate potential replacements for the custom eventlet handler or adapt existing code to use a more standard approach, and ensure thorough testing at each stage to maintain system stability.
+    - **Summary of Key Points:** Eventlet is used in specific drivers and configuration files but not globally throughout the project.
+    - **Potential Challenges:** Removing Eventlet would require updating driver configurations to use alternative WSGI servers or asynchronous mechanisms, which could introduce minor changes.
+    - **Recommendations:** Review driver configurations for potential updates, ensure that alternative implementations do not break functionality, and perform thorough testing to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/tooz/src/branch/master/tooz/drivers/zookeeper.py#n21 : from kazoo.handlers import eventlet as eventlet_handler

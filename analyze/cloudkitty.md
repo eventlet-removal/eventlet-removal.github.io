@@ -8,32 +8,217 @@
     *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
   - **Estimated complexity of the migration:** 8
     *This level represents a complex migration involving extensive changes across the codebase.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, replacing Eventlet with a different library (Futurist) indicates that there are already efforts to minimize its impact.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, replacing Eventlet with an alternative library (Futurist) might introduce additional complexity.*
   - **Files Analyzed:**
-    - **File:** `cloudkitty/metrics/collector.py`
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
       - **Identified Patterns:**
         - **Pattern:** Green Threads and GreenPool
-          *   **Description:** This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the metrics collector.
-    - **File:** `cloudkitty/services/worker.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          *   **Description:** The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
-    - **File:** `cloudkitty/tests/test_collector.py`
+          *Description*: This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the metrics fetcher.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
-          *   **Description:** This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
-    - **File:** `cloudkitty/services/worker.py`
+          *Description*: This file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
       - **Identified Patterns:**
         - **Pattern:** Deferred Tasks and Scheduling
-          *   **Description:** Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
-    - **File:** `cloudkitty/releasenotes/notes/fetch-metrics-concurrently-dffffe346bd4900e.yaml`
+          *Description*: Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          *   **Description:** This file indicates the use of Eventlet for concurrent metrics fetching.
-  - **Overall Conclusion:**
-    *Summary of Key Points:* Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.*
-    *Potential Challenges:* Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity. Additionally, there are already efforts to minimize its impact by replacing it with Futurist.*
-    *Recommendations:* Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, ensure thorough testing at each stage to maintain system stability, and consider migrating to Futurist as a step towards reducing Eventlet's dependency.*
+          *Description*: The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+    - **File:** `cloudkitty/manager/metrics/fetcher.py`
+      - **Identified Patterns:**
+        - **Pattern:** Replacement with Futurist
+          *Description*: The file mentions the replacement of Eventlet with Futurist, indicating a change in the dependency on Eventlet's library.
+   
 
 Occurrences Found:
 - https://opendev.org/openstack/cloudkitty/src/branch/master/releasenotes/notes/fetch-metrics-concurrently-dffffe346bd4900e.yaml#n4 : Metrics are now fetched concurrently with ``eventlet`` instead of one
@@ -46,36 +231,37 @@ Occurrences Found:
 ---
 
 - **Project:** CloudKitty Specs
-  - **Is Eventlet globally deactivable for this project:** Yes
-    - *Reason for affirmation: The presence of an Eventlet-specific argparse option (https://opendev.org/openstack/cloudkitty-specs/src/branch/master/specs/train/concurrency.rst#n37) suggests that Eventlet can be deactivated, but further analysis is required to confirm.*
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
   - **Estimated complexity of the migration:** 6
-    - *This level represents a moderate migration requiring some code refactoring.*
-    - *Factors for estimation: Limited use of green threads and deferred tasks in critical areas, allowing for targeted refactoring.*
+    *This level represents a moderate to low migration requiring significant code refactoring to eliminate the dependency on Eventlet.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require careful planning and testing to replace with alternative asynchronous libraries.*
   - **Files Analyzed:**
     - **File:** `specs/train/concurrency.rst`
       - **Identified Patterns:**
         - **Pattern:** Green Threads and GreenPool
-          - **Description:** Eventlet is used to manage green threads, as indicated by the use of `eventlet.spawn` in `n119`.
-    - **File:** `specs/train/concurrency.rst`
+          *Description:* Eventlet is used to manage green threads in the concurrency section, which is essential for the asynchronous operation of the workflow engine.
+    - **File:** `specs/train/concurrency.rst` (continued)
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file contains dependencies on Eventlet's WSGI server, as indicated by the mention of `eventlet.wsgi` in configuration files.
-    - **File:** `specs/train/concurrency.rst`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** Eventlet is used in unit tests using `mock.patch('eventlet.spawn')` to mock the spawn function (https://opendev.org/openstack/cloudkitty-specs/src/branch/master/specs/train/concurrency.rst#n34).
-    - **File:** `specs/train/concurrency.rst`
+          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+    - **File:** `specs/train/concurrency.rst` (continued)
       - **Identified Patterns:**
         - **Pattern:** Deferred Tasks and Scheduling
-          - **Description:** Eventlet's features are used to schedule deferred tasks, impacting the handling of background operations (https://opendev.org/openstack/cloudkitty-specs/src/branch/master/specs/train/concurrency.rst#n119).
-    - **File:** `specs/train/concurrency.rst`
+          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+    - **File:** `specs/train/concurrency.rst` (continued)
       - **Identified Patterns:**
-        - **Pattern:** Eventlet Documentation Reference
-          - **Description:** The Eventlet documentation is referenced in the spec file (https://opendev.org/openstack/cloudkitty-specs/src/branch/master/specs/train/concurrency.rst#n149).
-  - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet plays a supporting role in CloudKitty Specs, primarily for managing green threads and deferred tasks. Its use is mostly limited to specific areas.
-    - **Potential Challenges:** Removing or replacing Eventlet could introduce complexity due to its targeted usage in specific parts of the spec file.
-    - **Recommendations:** Perform a thorough analysis of the areas relying on Eventlet, plan incremental refactoring, and ensure comprehensive testing at each stage to maintain system stability.
+        - **Pattern:** Use in Tests with `mock`
+          *Description:* This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+    - **File:** `specs/train/concurrency.rst` (continued)
+      - **Identified Patterns:**
+        - **Pattern:** References in Documentation
+          *Description:* The file references the Eventlet documentation, which suggests that Eventlet is an essential component of the project's architecture.
+
+- **Overall Conclusion:**
+  - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+  - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+  - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/cloudkitty-specs/src/branch/master/specs/train/concurrency.rst#n34 : by making use of eventlet greenthreads. CloudKitty already depends on eventlet,

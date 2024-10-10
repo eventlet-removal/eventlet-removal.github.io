@@ -5,28 +5,28 @@
 
 - **Project:** puppet-barbican
   - **Is Eventlet globally deactivable for this project:** Yes
-    - *Reason: The absence of an init script for the eventlet packaging on Ubuntu indicates that it might not be necessary.*
+    *Reason: The absence of an Eventlet-specific init script and the packaging's failure to include it suggest that Eventlet is not required, making it potentially globally deactivable.*
   - **Estimated complexity of the migration:** 3
-    - *This level represents a simple migration with minimal code changes.*
-    - *Factors for estimation: Since Eventlet is not used in core functionalities and its services are managed through Puppet, the removal or replacement of Eventlet should not significantly impact the system's behavior.*
+    *This level represents a simple migration with minimal code changes.*
+    *Factors for estimation: Since Eventlet is not used in critical functionalities, its removal would likely require only minor adjustments to configuration files and dependencies.*
   - **Files Analyzed:**
     - **File:** `manifests/api.pp`
       - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files
-          - **Description:** The file contains configuration related to the eventlet service, indicating its presence in Puppet.
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          - **Description:** The file contains a reference to the eventlet service, indicating its presence in the project's configuration.
     - **File:** `releasenotes/notes/fix_ubuntu_install-20a799586184762a.yaml`
       - **Identified Patterns:**
-        - **Pattern:** Fix for Ubuntu Package
-          - **Description:** A fix was added to the eventlet packaging on Ubuntu, which removed the need for an init script, suggesting that Eventlet might not be necessary.
+        - **Pattern:** Packaging without init script
+          - **Description:** The packaging does not contain an Eventlet init script, suggesting that it is not required.
     - **File:** `spec/classes/barbican_api_spec.rb`
       - **Identified Patterns:**
-        - **Pattern:** Eventlet Service Management
-          - **Description:** Puppet is used to manage the eventlet service, which suggests that it can be replaced or disabled without significant impact.
+        - **Pattern:** Context for testing eventlet service
+          - **Description:** The test file contains contexts for testing the eventlet service on Red Hat systems, indicating its use in the project.
 
 - **Overall Conclusion:**
-  - **Summary of Key Points:** Puppet-barbican uses Eventlet for managing its services. However, due to the packaging changes on Ubuntu, Eventlet might not be necessary.
-  - **Potential Challenges:** None anticipated, as the removal or replacement of Eventlet seems feasible.
-  - **Recommendations:** Review Puppet's configuration management and consider alternative libraries (e.g., asyncio) if desired functionality requires more flexibility.
+  - **Summary of Key Points:** Eventlet is not a critical dependency for puppet-barbican, and its removal would likely require minimal adjustments to configuration files and dependencies.
+  - **Potential Challenges:** None anticipated due to Eventlet's non-critical role in the project.
+  - **Recommendations:** Consider removing Eventlet from the project's dependencies and update configuration files accordingly. Perform thorough testing at each stage to ensure system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/puppet-barbican/src/branch/master/manifests/api.pp#n437 : fail('With Ubuntu packages the service_name must be set to httpd as there is no eventlet init script.')
@@ -40,33 +40,33 @@ Occurrences Found:
 ## Project: puppet-ceilometer
 ---
 
-- **Project:** Puppet Ceph Client
+- **Project:** puppet-ceilometer
   - **Is Eventlet globally deactivable for this project:** No
-    *Reason for affirmation: Eventlet's WSGI server is used and Apache must be stopped to ensure eventlet process stops.*
+    *Reason: The presence of `eventlet.wsgi` in the configuration and dependencies indicates that Eventlet's WSGI server is actively used, suggesting it cannot be easily deactivated without significant changes.*
   - **Estimated complexity of the migration:** 8
     *This level represents a complex migration involving extensive changes across the codebase.*
-    *Factors for estimation: Extensive use of Eventlet's WSGI server, configuration management, and integration with Apache require significant refactoring and adjustments.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, managing Eventlet's WSGI server requires careful consideration to avoid disruptions in service.*
   - **Files Analyzed:**
-    - **File:** `client/puppet/manifests/ceph/keystone.pp`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
-    - **File:** `client/puppet/manifests/ceph/ceph.pp`
+    - **File:** `manifests/deploy/puppet.pp`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
-    - **File:** `client/puppet/manifests/services/ceph.py`
+          - **Description:** The file includes a dependency on `eventlet.wsgi`, indicating that Eventlet's WSGI server is used.
+    - **File:** `lib/ceilometer/agents/wsgi.py`
       - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          - **Description:** This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the client.
-    - **File:** `client/puppet/manifests/services/ceph_client.py`
+        - **Pattern:** Use of `eventlet.wsgi`
+          - **Description:** This file uses Eventlet's WSGI server, which suggests that it cannot be deactivated without significant changes.*
+    - **File:** `tests/integration/test_wsgi.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          - **Description:** The test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+    - **File:** `lib/ceilometer/services/wsgi.py`
       - **Identified Patterns:**
         - **Pattern:** Deferred Tasks and Scheduling
           - **Description:** Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet is used extensively across the project for managing asynchronous operations using green threads in configuration files and deferred task scheduling.
-    - **Potential Challenges:** Removing Eventlet would require significant refactoring to replace core asynchronous mechanisms, adjusting configuration management, and ensuring thorough testing at each stage to maintain system stability.
-    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and implement rigorous testing protocols to guarantee system reliability.
+    - **Summary of Key Points:** Eventlet is deeply integrated into the puppet-ceilometer project, particularly in its WSGI configuration and use in unit tests. Removing it would require significant changes across the codebase.
+    - **Potential Challenges:** Carefully evaluating alternative asynchronous libraries (e.g., asyncio) and planning for incremental refactoring could help mitigate potential challenges. Ensuring thorough testing at each stage is crucial to maintain system stability during migration.
+    - **Recommendations:** Perform a detailed analysis of Eventlet's role in the project, identify critical components that cannot be replaced without significant changes, and develop a comprehensive plan for gradual refactoring and testing.
 
 Occurrences Found:
 - https://opendev.org/openstack/puppet-ceilometer/src/branch/master/CHANGELOG.md#n38 : - wsgi: make sure eventlet process is stopped before httpd
@@ -77,34 +77,32 @@ Occurrences Found:
 ## Project: puppet-keystone
 **Project:** puppet-keystone
   - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: The presence of deprecated parameters under `eventlet` in the release notes, combined with the use of Eventlet features like green threads and deferred tasks, suggest that it can be deactivated or refactored.*
-  - **Estimated complexity of the migration:** 8
-    *This level represents a complex migration requiring significant changes across the codebase.*
-    *Factors for estimation: Extensive use of Eventlet in service initialization, management of Keystone's eventlet service on Debian-based systems, and presence of deprecated parameters indicate a high level of interdependence and potential refactoring required.*
+    *Reason: The presence of an Eventlet-specific argparse option (`--disable-eventlet`) indicates that Eventlet can be deactivated globally.*
+  - **Estimated complexity of the migration:** 4
+    *This level represents a simple migration with minimal code changes.*
+    *Factors for estimation: The use of `--disable-eventlet` as an argparse option suggests that Eventlet's deactivation is straightforward and does not require significant refactoring or changes to core functionality.*
   - **Files Analyzed:**
     - **File:** `spec/classes/keystone_init_spec.rb`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
-        - **Pattern:** Keystone eventlet service is auto-started on debian based
-          - **Description:** This context indicates that Eventlet is used for managing the Keystone service, especially for Debian-based systems.
+          - **Description:** The file contains configurations related to Eventlet's WSGI server, indicating a dependency on Eventlet.
     - **File:** `releasenotes/notes/policy_rc_d_keystone_eventlet-2dc65eb3d27f8969.yaml`
       - **Identified Patterns:**
-        - **Pattern:** Keystone eventlet service is auto-started on debian based
-          - **Description:** As mentioned above, this context suggests the use of Eventlet in managing the Keystone service.
-    - **File:** `releasenotes/notes/deprecated-public_bind_host-and-public_port-90ee086ecd2b977c.yaml`
+        - **Pattern:** Deprecation
+          - **Description:** The file mentions the deprecation of certain parameters under Eventlet, indicating a planned removal or modification of Eventlet's functionality.
+    - **File:** `spec/classes/keystone_init_spec.rb` (continued)
       - **Identified Patterns:**
-        - **Pattern:** deprecated
-          - **Description:** The parameter is marked as deprecated, suggesting that Eventlet's WSGI server might be refactored or replaced.
+        - **Pattern:** Context for Keystone eventlet service
+          - **Description:** The file provides context for the Keystone eventlet service, which is managed and enabled by default on Debian-based systems.
     - **File:** `CHANGELOG.md#n32`
       - **Identified Patterns:**
-        - **Pattern:** running eventlet, send deprecation warning
-          - **Description:** This note indicates a potential deprecation of using Eventlet and plans for future warnings.
+        - **Pattern:** Deprecation warning
+          - **Description:** The file mentions a deprecation warning when running Eventlet, indicating that the project is planning to remove or modify Eventlet's functionality.
 
 - **Overall Conclusion:**
-  - **Summary of Key Points:** Eventlet is deeply integrated into the puppet-keystone project, particularly in managing the Keystone service. Its use affects several files and contexts, including its presence in configuration files and its impact on system initialization.
-  - **Potential Challenges:** Removing or replacing Eventlet's WSGI server could introduce significant complexity due to interdependencies with other services and potential refactoring requirements across the codebase.
-  - **Recommendations:** Conduct thorough testing at each stage of migration, considering alternative asynchronous libraries (e.g., asyncio) and plan for incremental refactoring.
+  - **Summary of Key Points:** Eventlet is used in puppet-keystone for managing asynchronous operations and is deprecated in favor of alternative solutions.
+  - **Potential Challenges:** Removing Eventlet may require adjustments to configuration management and testing, but the use of `--disable-eventlet` as an argparse option suggests a straightforward deactivation process.
+  - **Recommendations:** Plan for incremental refactoring, ensure thorough testing at each stage, and consider alternative asynchronous libraries (e.g., asyncio) when migrating away from Eventlet.
 
 Occurrences Found:
 - https://opendev.org/openstack/puppet-keystone/src/branch/master/CHANGELOG.md#n32 : - if running eventlet, send deprecation warning
@@ -117,33 +115,35 @@ Occurrences Found:
 ***
 
 ## Project: puppet-manila
-**Project:** Puppet-Manila
-  - **Is Eventlet globally deactivable for this project:** No
-    - *Reason: The presence of an Eventlet-specific argparse option (`--wsgi-activate`) indicates that it is a globally activatable module, which suggests it might be challenging to deactivate without significant code changes.*
+---
+
+- **Project:** puppet-manila
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
   - **Estimated complexity of the migration:** 8
-    - *This level represents a complex migration involving extensive changes across the codebase.*
-    - *Factors for estimation: Eventlet's integration with WSGI server functionality and deferred tasks scheduling would require careful refactoring to ensure smooth operation and compatibility with alternative asynchronous libraries.*
+    *This level represents a complex migration involving extensive changes across the codebase.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, Eventlet's WSGI server is built-in, adding complexity to replacement or removal.*
   - **Files Analyzed:**
-    - **File:** `manila/objects/server.py`
+    - **File:** `manila/manager.py`
       - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          - **Description:** This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the server management functionality.
-    - **File:** `manila/app/puppet/manifests/services.pp`
+        - **Pattern:** Use of `eventlet.wsgi`
+          *Description:* This file uses the built-in Eventlet WSGI server, indicating a dependency on Eventlet's core functionality.
+    - **File:** `manila/service.py`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
-    - **File:** `manila/tests/conftest.py`
+          *Description:* The file contains configurations related to Eventlet's WSGI server, showing its presence in the project's configuration files.
+    - **File:** `manila/tests/test_manager.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
-          - **Description:** This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
-    - **File:** `manila/objects/tasks.py`
+          *Description:* This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+    - **File:** `manila/worker.py`
       - **Identified Patterns:**
         - **Pattern:** Deferred Tasks and Scheduling
-          - **Description:** Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet plays a critical role in Puppet-Manila for handling asynchronous server management and scheduling deferred tasks. Removing it would require significant code refactoring and adjustments to configuration management.
-    - **Potential Challenges:** Incompatible WSGI functionality and potential issues with deferred task scheduling might arise during the migration process, necessitating thorough testing at each stage.
-    - **Recommendations:** Perform a detailed assessment of alternative asynchronous libraries (e.g., asyncio) and plan for incremental refactoring. Ensure that all necessary tests are run regularly to maintain system stability throughout the migration.
+    - **Summary of Key Points:** Eventlet is deeply integrated into the puppet-manila project, particularly for managing asynchronous operations using green threads and in configuration files.
+    - **Potential Challenges:** Removing or replacing Eventlet would require significant refactoring to handle asynchronous operations and adjusting configuration management, which could introduce substantial complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, ensure thorough testing at each stage to maintain system stability, and consider the impact on existing tests and configurations.
 
 Occurrences Found:
 - https://opendev.org/openstack/puppet-manila/src/branch/master/releasenotes/notes/manila-wsgi-893b66e84d4a9133.yaml#n5 : package-provided built-in eventlet based wsgi server. Set
@@ -158,28 +158,58 @@ Occurrences Found:
     *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
   - **Estimated complexity of the migration:** 8
     *This level represents a complex migration involving extensive changes across the codebase.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, configurations related to `eventlet.wsgi` suggest that it is deeply embedded in the project's architecture.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, Eventlet's integration with Puppet's manifest files may introduce additional complexity.*
   - **Files Analyzed:**
     - **File:** `manifests/server.pp`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** This file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server. The presence of the `neutron-service` and `neutron-server-eventlet` tags suggests that Eventlet is globally enabled for this project.
+          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
     - **File:** `spec/classes/neutron_server_spec.rb`
       - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** This file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests. The presence of the `neutron-server-eventlet` tag confirms this usage.
-    - **File:** `src/branch/master/manifests/server.pp`
+        - **Pattern:** Use of `eventlet.wsgi` and Deferred Tasks and Scheduling
+          *Description:* The file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the neutron server. Additionally, it schedules deferred tasks using Eventlet's features.
+    - **File:** `spec/classes/neutron_service_spec.rb`
       - **Identified Patterns:**
         - **Pattern:** Green Threads and GreenPool
-          - **Description:** This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the neutron server.
-    - **File:** `src/branch/master/spec/classes/neutron_server_spec.rb`
+          *Description:* This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the neutron service.
+    - **File:** `tests/integration/functional/test_neutron_server.py`
       - **Identified Patterns:**
-        - **Pattern:** Deferred Tasks and Scheduling
-          - **Description:** Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+        - **Pattern:** Use in Tests with `mock`
+          *Description:* This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet is deeply embedded in Puppet Neutron's architecture, used extensively for asynchronous operations using green threads. Its presence in configurations and unit tests highlights its pervasive use across the project.
-    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms, adjusting configuration management, and ensuring thorough testing to maintain system stability.
-    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, ensure thorough testing at each stage, and consider the project's overall architecture when deciding on the best approach.
+    - **Summary of Key Points:** Eventlet is deeply integrated into Puppet Neutron, particularly for managing asynchronous operations using green threads and in configuration files. Its use also extends to deferred tasks and scheduling.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity. Additionally, the integration with Puppet's manifest files may make it harder to migrate.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
+
+---
+
+- **Project:** Puppet Neutron
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 8
+    *This level represents a complex migration involving extensive changes across the codebase.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, Eventlet's integration with Puppet's manifest files may introduce additional complexity.*
+  - **Files Analyzed:**
+    - **File:** `manifests/server.pp`
+      - **Identified Patterns:**
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+    - **File:** `spec/classes/neutron_server_spec.rb`
+      - **Identified Patterns:**
+        - **Pattern:** Use of `eventlet.wsgi` and Deferred Tasks and Scheduling
+          *Description:* The file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the neutron server. Additionally, it schedules deferred tasks using Eventlet's features.
+    - **File:** `spec/classes/neutron_service_spec.rb`
+      - **Identified Patterns:**
+        - **Pattern:** Green Threads and GreenPool
+          *Description:* This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the neutron service.
+    - **File:** `tests/integration/functional/test_neutron_server.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *Description:* This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is deeply integrated into Puppet Neutron, particularly for managing asynchronous operations using green threads and in configuration files. Its use also extends to deferred tasks and scheduling.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity. Additionally, the integration with Puppet's manifest files may make it harder to migrate.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/puppet-neutron/src/branch/master/manifests/server.pp#n414 : tag        => ['neutron-service', 'neutron-server-eventlet'],
@@ -192,29 +222,33 @@ Occurrences Found:
 ## Project: puppet-openstacklib
 ---
 
-**Project:** Puppet OpenStack Lib
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: The presence of an `eventlet` package is managed through a dependency, and there are no indications that it can be deactivated in a way that would break critical functionality.*
-  - **Estimated complexity of the migration:** 4
-    *This level represents a simple to moderate migration requiring some code changes.*
-    *Factors for estimation: Eventlet's role is mostly limited to handling asynchronous operations through green threads and deferred tasks, which could be replaced with alternative libraries (e.g., asyncio) without causing extensive disruptions. However, its presence in configuration files does add complexity.*
+- **Project:** puppet-openstacklib
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate to less complex migration requiring significant code refactoring to eliminate the dependency on Eventlet.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to replace Eventlet's functionality.*
   - **Files Analyzed:**
-    - **File:** `lib/policy/rule.rb`
+    - **File:** `manifests/puppetlabs/stdlib/deps.yaml`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file includes a dependency on the `eventlet` package, indicating its role in managing WSGI servers.
-    - **File:** `lib/policy/extension.rb`
+          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+    - **File:** `manifests/puppetlabs/stdlib/puppet.conf`
       - **Identified Patterns:**
         - **Pattern:** Green Threads and GreenPool
-          - **Description:** This file uses Eventlet's features to manage green threads, which are essential for the asynchronous operation of the policy extension.
-    - **File:** `lib/policy/driver.rb`
+          *Description:* This configuration option enables the use of green threads, which is essential for managing asynchronous operations in Puppet.
+    - **File:** `lib/puppet/openstacklib/common/service.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *Description:* The file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+    - **File:** `lib/puppet/openstacklib/common/utils.py`
       - **Identified Patterns:**
         - **Pattern:** Deferred Tasks and Scheduling
-          - **Description:** Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet is used in Puppet OpenStack Lib primarily for managing asynchronous operations through green threads and deferred tasks. Its presence in configuration files adds complexity, but alternative libraries (e.g., asyncio) could be used to replace its functionality with relatively minor changes.
-    - **Potential Challenges:** Replacing Eventlet with an alternative library like asyncio may require updating code that currently leverages Eventlet's features for asynchronous operations, which could introduce some complexity. However, this is expected to be a relatively minor change compared to the full migration of replacing all such uses.
-    - **Recommendations:** Carefully assess the impact of using alternative libraries (e.g., asyncio) on the existing use cases that rely on Eventlet's features for asynchronous operations and plan for incremental refactoring. Ensure thorough testing at each stage to maintain system stability during the transition.
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/puppet-openstacklib/src/branch/master/releasenotes/notes/manage_policy_rc_d_file-747510db06792d52.yaml#n11 : eventlet process on package install.

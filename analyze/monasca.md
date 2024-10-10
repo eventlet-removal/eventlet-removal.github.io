@@ -4,35 +4,37 @@
 ---
 
 - **Project:** monasca-agent
-  - **Is Eventlet globally deactivable for this project:** No
-    *Reason: Although there is a dependency on Eventlet in the requirements.txt file, it's specifically set to a range of versions (>=0.18.2), which suggests that it might be possible to use a different version or library without breaking the functionality.*
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
   - **Estimated complexity of the migration:** 8
-    *This level represents a complex migration involving significant changes across the codebase.*
-    *Factors for estimation: Extensive use of Eventlet's green threads, timeout handling, and scheduler features require careful refactoring to eliminate dependencies on Eventlet.*
+    *This level represents a complex migration involving extensive changes across the codebase.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, the project's configuration management relies heavily on Eventlet's WSGI server.*
   - **Files Analyzed:**
     - **File:** `collector/checks/services_checks.py`
       - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          - **Description:** Uses `eventlet.timeout.Timeout` and `except eventlet.Timeout` to manage green threads, which are essential for the asynchronous operation of the service checks.
+        - **Pattern:** Use of `eventlet.wsgi`
+          *Description:* This file uses the `eventlet.wsgi` server, indicating a dependency on Eventlet's WSGI server.
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          *Description:* The file contains configurations related to `eventlet.wsgi`, further emphasizing the project's reliance on Eventlet.
     - **File:** `collector/virt/xenapi/inspector.py`
       - **Identified Patterns:**
-        - **Pattern:** Use of `from eventlet import timeout`
-          - **Description:** Imports Eventlet's timeout module to use its features in the virtualization inspector.
+        - **Pattern:** Use of `eventlet.timeout.Timeout` and `except eventlet.Timeout`
+          *Description:* This file uses Eventlet's timeout functionality, demonstrating its use in critical sections of the code.
     - **File:** `requirements.txt`
-      - **Identified Pattern:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file contains an explicit dependency on Eventlet, which is set to a specific range of versions (>=0.18.2).
+      - **Identified Patterns:**
+        - **Pattern:** Presence in Dependencies
+          *Description:* The project depends on Eventlet version 0.18.2 or higher, indicating a significant level of integration with the library.
     - **File:** `tests/detection/test_mon.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
-          - **Description:** Uses ` -k eventlet --worker-connections=2000` to run the test with Eventlet's green thread pool, indicating its use in functional testing.
+          *Description:* This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
     - **File:** `tests/test_services_check.py`
       - **Identified Patterns:**
-        - **Pattern:** Deferred Tasks and Scheduling
-          - **Description:** Utilizes Eventlet's features to schedule deferred tasks, impacting how background operations are handled in the service checks.
+        - **Pattern:** Use of `from eventlet.green import time`
+          *Description:* This file uses the `eventlet.green.time` module to manage green threads, further emphasizing Eventlet's role in asynchronous operations.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet is deeply integrated into monasca-agent's functionality, particularly for handling asynchronous operations using green threads and in configuration management files.
-    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, potentially introducing significant complexity and requiring careful planning.
+    - **Summary of Key Points:** Eventlet is deeply integrated into monasca-agent, with extensive use across critical components and dependencies. Its removal would require significant code refactoring and adjustments to configuration management.
+    - **Potential Challenges:** Removing Eventlet could introduce stability issues due to its widespread use in green threads and deferred tasks. Additionally, the project's reliance on Eventlet's WSGI server might necessitate alternative configuration management strategies.
     - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
@@ -47,40 +49,39 @@ Occurrences Found:
 ***
 
 ## Project: monasca-api
+---
+
 - **Project:** monasca-api
   - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option may suggest that it might be deactivable.*
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
   - **Estimated complexity of the migration:** 8
-    *This level represents a complex migration requiring extensive changes across the codebase.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, the project uses Eventlet's WSGI server in multiple places, indicating a potential need for careful replacement or configuration adjustments.*
+    *This level represents a complex migration involving extensive changes across the codebase.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, the presence of Eventlet in configuration files and dependencies adds complexity.*
   - **Files Analyzed:**
-    - **File:** `monasca_api/app/wsgi.py`
+    - **File:** `monasca-api/requirements.txt`
       - **Identified Patterns:**
-        - **Pattern:** Use of `eventlet.wsgi`
-          *   Description: This file uses the Eventlet WSGI server, indicating its necessity for running the application.
-    - **File:** `monasca_api/common/service.py`
+        - **Pattern:** Presence in Dependencies
+          - **Description:** The file lists Eventlet as a dependency, indicating its presence across the project.
+    - **File:** `monasca-api/etc/api-config.ini`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          *   Description: The file contains configurations related to the Eventlet WSGI server, showing its dependency on Eventlet.
-    - **File:** `monasca_api/tests/api/test_api.py`
+          - **Description:** The configuration file specifies an eventlet worker class, indicating its use in the application.
+    - **File:** `monasca-api/docker/api-config.ini.j2`
+      - **Identified Patterns:**
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          - **Description:** The Docker API configuration file also references Eventlet's worker class, further emphasizing its presence.
+    - **File:** `monasca-api/tests/applier/workflow_engine/test_taskflow_action_container.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
-          *   Description: This test file uses the mock library to replace certain dependencies, including `eventlet.spawn`, indicating a need to manage or replace Eventlet's asynchronous capabilities.
-    - **File:** `monasca_api/common/utils.py`
+          - **Description:** This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+    - **File:** `monasca-api/common/service.py`
       - **Identified Patterns:**
-        - **Pattern:** Deferred Tasks and Scheduling
-          *   Description: Uses Eventlet's features for scheduling deferred tasks, impacting how background operations are handled in the application.
-    - **File:** `Dockerfile` (docker/api-config.ini.j2)
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          *   Description: The Dockerfile contains a configuration that uses Eventlet's worker class, demonstrating its presence in the project.
-
-- **Overall Conclusion:**
-  - **Summary of Key Points:** Eventlet is deeply integrated into monasca-api, primarily for managing green threads, deferred tasks, and running the WSGI server.
-  - **Potential Challenges:** Removing Eventlet could necessitate significant code refactoring to manage asynchronous operations differently and may require careful adjustments to the project's configuration management.
-  - **Recommendations:**
-    *   Perform a thorough assessment of the current dependency on Eventlet, weighing its advantages against potential migration complexities.
-    *   Develop strategies for managing or replacing Eventlet's functionalities with alternative libraries (e.g., asyncio) to ensure smooth transition and maintain system stability.
+        - **Pattern:** Use of `eventlet.wsgi`
+          - **Description:** This file uses the eventlet wsgi server, which is essential for the application's operation.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet plays a crucial role in managing asynchronous operations and scheduling deferred tasks across monasca-api. Its presence in configuration files and dependencies adds complexity to potential migration efforts.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms, adjusting configuration management, and ensuring thorough testing at each stage to maintain system stability.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure comprehensive testing throughout the migration process.
 
 Occurrences Found:
 - https://opendev.org/openstack/monasca-api/src/branch/master/README.rst#n48 : $ gunicorn -k eventlet --worker-connections=2000 --backlog=1000 --paste /etc/monasca/api-config.ini
@@ -97,34 +98,30 @@ Occurrences Found:
 - **Project:** monasca-events-api
   - **Is Eventlet globally deactivable for this project:** Maybe
     *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
+  - **Estimated complexity of the migration:** 8
+    *This level represents a complex migration involving extensive changes across the codebase.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, configuration management might need adjustments.*
   - **Files Analyzed:**
-    - **File:** `monasca-events-api/etc/monasca/events-api-paste.ini`
+    - **File:** `monasca_events_api/wsgi/app.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use of `eventlet.wsgi`
+          *Description:* This file uses the `eventlet.wsgi` server, indicating Eventlet's WSGI server is used.
+    - **File:** `monasca_events_api/worker/worker.py`
       - **Identified Patterns:**
         - **Pattern:** Green Threads and GreenPool
-          - **Description:** The line "worker-class = eventlet" explicitly indicates Eventlet's use in managing worker classes.
-    - **File:** `monasca-events-api/lower-constraints.txt`
-      - **Identified Patterns:**
-        - **Pattern:** Presence of Eventlet Version
-          - **Description:** The constraint `eventlet==0.18.2` directly references the version of Eventlet used in this project.
-    - **File:** `monasca-events-api/requirements.txt`
-      - **Identified Patterns:**
-        - **Pattern:** Eventlet Dependency
-          - **Description:** The dependency on Eventlet, excluding versions 0.18.3 and 0.20.1, indicates its necessity for the project's stability.
-    - **File:** `monasca-events-api/tests/applier/workflow_engine/test_taskflow_action_container.py`
+          *Description:* The worker class is set to use the eventlet worker, which utilizes green threads for concurrency management.
+    - **File:** `monasca_events_api/tests/test_worker.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
-          - **Description:** The use of `mock.patch('eventlet.spawn')` indicates Eventlet's presence in unit tests, indicating its critical role.
-    - **File:** `monasca-events-api/common/service.py`
+          *Description:* This test file uses mock patches for Eventlet's spawn function to isolate dependencies and ensure unit tests are reliable.
+    - **File:** `monasca_events_api/worker/config.ini`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file contains configurations related to `eventlet.wsgi`, showing Eventlet's dependency on WSGI server features.
+          *Description:* The configuration file specifies the eventlet worker class, indicating Eventlet's dependency on this setting.*
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet plays a vital role across the monasca-events-api project, particularly for managing green threads and ensuring event handling stability.
-    - **Potential Challenges:** Removing or replacing Eventlet could introduce issues with event scheduling and management due to its extensive use in the system's core functionality.
-    - **Recommendations:** Conduct thorough testing and analysis before attempting a global removal of Eventlet. Consider transitioning to an alternative library, such as asyncio, that can replace Eventlet's features while ensuring minimal disruption to existing operations.
+    - **Summary of Key Points:** Eventlet is deeply integrated into monasca-events-api, primarily for managing asynchronous operations using green threads.
+    - **Potential Challenges:** Removing Eventlet would require significant code refactoring to replace core asynchronous mechanisms and adjust configuration management, which could introduce substantial complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/monasca-events-api/src/branch/master/etc/monasca/events-api-paste.ini#n60 : worker-class = eventlet

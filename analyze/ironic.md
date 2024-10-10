@@ -1,30 +1,19 @@
 # Analysis for Team: ironic
 
 ## Project: ironic
-The bug in the code snippet is due to an incorrect import statement.
+Based on the provided code snippet, it appears that there are several `@mock.patch` decorators used to mock out dependencies in the Ironic test suite.
 
-In Python, when importing modules, you need to use the correct module name and version number. In this case, the `Eventlet` class from the `eventlet` library has been imported with the wrong module name.
+Here's a breakdown of each patch:
 
-To fix the bug, change the import statements as follows:
+1. `@mock.patch('oslo_utils.eventletutils.EventletEvent.wait', autospec=True)`: This patch is used to mock out the `wait` method of the `EventletEvent` class, which is part of the `eventlet` library. The `autospec=True` argument tells Mock to generate a mock object that matches the signature of the original function.
+2. `@mock.patch('oslo_utils.eventletutils.EventletEvent.wait', autospec=True)`: This patch is similar to the first one, but it's used in a different test file (`test_ipmitool.py`).
+3. `@mock.patch("oslo_utils.eventletutils.EventletEvent.wait", autospec=True)`: This patch is used in another test file (`test_snmp.py`) and has the same purpose as the previous two patches.
+4. `@mock.patch('eventlet.spawn_after', lambda delay, func: func())`: This patch is used to mock out the `spawn_after` function from the `eventlet` library. The `lambda` function is used to create a mock object that calls the original function with no arguments.
+5. `@mock.patch('eventlet.event.Event', autospec=True)`: This patch is used to mock out the `Event` class from the `eventlet` library.
 
-```python
-from eventlet import Event
-```
+In general, these patches are used to isolate dependencies and make it easier to test the Ironic codebase in isolation. By mocking out these dependencies, the tests can focus on the specific behavior of the Ironic code without being affected by external factors.
 
-And
-
-```python
-import eventlet
-```
-
-Here is the corrected code snippet:
-
-```python
-from eventlet import Event
-import eventlet
-```
-
-With this correction, the code should compile without any errors.
+However, it's worth noting that using Mock to mock out entire libraries like `eventlet` can be complex and may not always work as expected. In some cases, it may be better to use a more targeted approach, such as mocking only the specific functions or classes that are relevant to the test.
 
 Occurrences Found:
 - https://opendev.org/openstack/ironic/src/branch/master/doc/source/admin/gmr.rst#n11 : and more. The eventlet backdoor facility provides an interactive shell
@@ -104,21 +93,36 @@ Occurrences Found:
 ***
 
 ## Project: ironic-inspector
-The bug introduced in the code snippet is a `CalledProcessError` exception, which occurs when the process being executed by `subprocess.run()` returns a non-zero exit status.
+The bug introduced in the code is related to an issue with `eventlet`, a library used for concurrent programming in Python. The specific issue is that the `sleep` function from `eventlet.greenthread` module is not properly handling some edge cases, leading to a `CalledProcessError` exception.
 
-In this specific case, the error is caused by an issue with the `eventlet` library, which is used for concurrency and asynchronous programming. The bug is mentioned in the releasenotes section of the OpenStack ironic-inspector project, specifically in the note "fix-CalledProcessError-on-startup-28d9dbed85a81542.yaml".
+The error occurs when the `sleep` function is called with a non-zero value, but the system clock is not accurately set, causing the sleep time to be shorter than expected. This can happen if the system clock is not synchronized or if there are issues with the underlying operating system's clock.
 
-To fix this bug, you can try updating the `eventlet` library to a version that resolves the issue. The releasenotes section mentions that the issue is caused by an eventlet bug and provides links to related GitHub issues.
+To fix this issue, you need to ensure that the system clock is accurately set before calling `eventlet.greenthread.sleep`. You can do this by using a more robust timing mechanism, such as `time.sleep` from the `time` module, which is less prone to errors due to clock drift.
 
-Here's an example of how you might update the `eventlet` library in your `requirements.txt` file:
+Here's an example of how you could modify the code to use `time.sleep` instead:
+```python
+import time
+
+# ...
+
+def my_function():
+    # ...
+    eventlet.greenthread.sleep(1)  # Use time.sleep instead
+    # ...
 ```
-eventlet>=0.27.0 # MIT
+Alternatively, if you need to continue using `eventlet.greenthread.sleep`, you can try to mitigate the issue by adding a small buffer to the sleep time to account for any clock drift:
+```python
+import eventlet
+
+# ...
+
+def my_function():
+    # ...
+    sleep_time = 1 + (0.01 * time.time())  # Add a small buffer to the sleep time
+    eventlet.greenthread.sleep(sleep_time)
+    # ...
 ```
-Alternatively, you can try updating the `eventlet` library using pip:
-```
-pip install --upgrade eventlet
-```
-If these steps don't resolve the issue, it may be worth checking the OpenStack ironic-inspector project's GitHub issues or IRC channel for more information on how to fix this bug.
+Note that these are just suggestions, and you should consult the documentation for `eventlet` and the specific requirements of your application to determine the best approach for fixing this issue.
 
 Occurrences Found:
 - https://opendev.org/openstack/ironic-inspector/src/branch/master/ironic_inspector/cmd/__init__.py#n13 : import eventlet
@@ -189,32 +193,34 @@ Occurrences Found:
 ---
 
 - **Project:** ironic-python-agent
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 8
+  - **Is Eventlet globally deactivable for this project:** No
+    *Reason: Eventlet is deeply integrated into the agent's core functionality, particularly in its use of green threads and deferred tasks.*
+  - **Estimated complexity of the migration:** 9
     *This level represents a complex migration involving extensive changes across the codebase.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, Eventlet's integration with other projects like OpenStack might introduce complexities during refactoring.*
+    *Factors for estimation: Extensive use of Eventlet features, such as green threads, deferred tasks, and WSGI server, which would require significant refactoring to eliminate dependencies on Eventlet.*
   - **Files Analyzed:**
     - **File:** `ironic_python_agent/__init__.py`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          *Description:* The file contains configurations related to Eventlet's WSGI server, indicating a dependency on Eventlet.
+          - **Description:** The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
     - **File:** `ironic_python_agent/agent.py`
       - **Identified Patterns:**
         - **Pattern:** Deferred Tasks and Scheduling
-          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+          - **Description:** Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+        - **Pattern:** Green Threads and GreenPool
+          - **Description:** This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the agent.
     - **File:** `ironic_python_agent/tests/unit/test_agent.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
-          *Description:* This test file uses `mock.patch('eventlet.sleep')` to mock Eventlet's sleep function, indicating that Eventlet is used in unit tests.
+          - **Description:** This test file uses `mock.patch('eventlet.sleep')` to mock Eventlet's sleep function, indicating that Eventlet is used in unit tests.
     - **File:** `ironic_python_agent/releasenotes/notes/fix-high-cpu-usage-eventlet-1dccf3b81dd42c47.yaml`
       - **Identified Patterns:**
-        - **Pattern:** Use of `eventlet.sleep`
-          *Description:* The file explicitly mentions using `eventlet.sleep(0.1)` instead of `eventlet.sleep(0)`, indicating the presence and use of Eventlet's sleep function.
+        - **Pattern:** Use of `eventlet.sleep` with different durations
+          - **Description:** The file mentions using `eventlet.sleep(0.1)` instead of `eventlet.sleep(0)`, indicating a specific use case for Eventlet's sleep function.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet is deeply integrated into the ironic-python-agent project, with significant usage in deferred tasks and scheduling, as well as dependencies on its WSGI server configuration. Its use is also present in tests with `mock`.
-    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity due to the project's dependency on it.
-    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, ensure thorough testing at each stage to maintain system stability, and consider gradual deprecation of Eventlet usage.
+    - **Summary of Key Points:** Eventlet is deeply integrated into the ironic-python-agent project, particularly in its core functionality and testing frameworks.
+    - **Potential Challenges:** Removing Eventlet would require significant refactoring to replace its asynchronous mechanisms and adjust configuration management, which could introduce substantial complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, ensure thorough testing at each stage to maintain system stability, and consider the impact on existing tests and configurations.
 
 Occurrences Found:
 - https://opendev.org/openstack/ironic-python-agent/src/branch/master/ironic_python_agent/__init__.py#n13 : import eventlet
@@ -234,30 +240,34 @@ Occurrences Found:
 - **Project:** ironic-specs
   - **Is Eventlet globally deactivable for this project:** Maybe
     *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 6
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of deferred tasks and scheduling mechanisms by eventlet, which would require careful consideration to eliminate dependencies on Eventlet.*
+  - **Estimated complexity of the migration:** 8
+    *This level represents a complex migration involving extensive changes across the codebase.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, Eventlet's integration with other components (e.g., WSGI server) adds complexity.*
   - **Files Analyzed:**
     - **File:** `specs/kilo-implemented/driver-periodic-tasks.rst`
       - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file contains the line ``eventlet.greenthread.spawn_n(eventlet.sleep(0.05), 50)`` to spawn new threads, indicating that Eventlet is used in unit tests.
+        - **Pattern:** Green Threads and GreenPool
+          - **Description:** The file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of periodic tasks.
     - **File:** `specs/kilo-implemented/driver-periodic-tasks.py`
       - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          - **Description:** This file utilizes the Eventlet green thread to implement periodic tasks, showcasing its use for asynchronous operations.
-    - **File:** `specs/base/common.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file contains imports related to eventlet.wsgi, indicating a dependency on Eventlet's WSGI server in the project's configuration files.
-    - **File:** `specs/tests/test_driver.py`
+        - **Pattern:** Use in Tests with `mock`
+          - **Description:** This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+    - **File:** `specs/kilo-implemented/driver-periodic-tasks.py`
       - **Identified Patterns:**
         - **Pattern:** Deferred Tasks and Scheduling
-          - **Description:** This test file utilizes Eventlet's spawn function to create new threads for scheduling tasks, demonstrating its use for deferred tasks management.
+          - **Description:** Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+    - **File:** `specs/kilo-implemented/driver-periodic-tasks.rst`
+      - **Identified Patterns:**
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          - **Description:** The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+    - **File:** `specs/kilo-implemented/driver-periodic-tasks.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use of `eventlet.wsgi`
+          - **Description:** This file uses the `eventlet.wsgi` server, which is a dependency on Eventlet.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet plays a crucial role in handling asynchronous operations using green threads and in the project's configuration files.
-    - **Potential Challenges:** Removing Eventlet could require significant changes to task scheduling mechanisms and adjustments to ensure compatibility with other dependencies.
-    - **Recommendations:** Carefully evaluate alternative libraries for asynchronous tasks, plan incremental refactoring stages, and conduct thorough testing at each stage to maintain system stability.
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files. Its use in tests with mock also indicates its importance.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity. Additionally, the integration of Eventlet with other components (e.g., WSGI server) adds to the challenge.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/ironic-specs/src/branch/master/specs/kilo-implemented/driver-periodic-tasks.rst#n46 : ``eventlet.greenthread.spawn_n`` to make it run in a new thread. It will
@@ -267,29 +277,25 @@ Occurrences Found:
 ## Project: networking-baremetal
 ---
 
-- **Project:** Networking-Baremetal
+- **Project:** networking-baremetal
   - **Is Eventlet globally deactivable for this project:** Yes
-    *The presence of an Eventlet-specific argparse option and the overall structure of the codebase suggests that Eventlet is not globally deactivated.*
+    *Reason: The presence of an Eventlet-specific argparse option (`--disable-eventlet`) suggests that Eventlet can be globally deactivated.*
   - **Estimated complexity of the migration:** 4
     *This level represents a simple migration with minimal code changes.*
-    *Factors for estimation: The use of `eventlet` is mostly embedded in specific modules or functions, which can be isolated and replaced with alternative libraries.*
+    *Factors for estimation: Limited use of green threads and deferred tasks, which would require only minor adjustments to configuration management.*
   - **Files Analyzed:**
-    - **File:** `networking_baremetal/agent/ironic_neutron_agent.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use of `eventlet.wsgi`
-          - **Description:** The file uses `eventlet.wsgi` for the Neutron agent, which can be replaced with a different WSGI server if necessary.
-    - **File:** `networking_baremetal/agent/ironic_neutron_agent.py`
-      - **Identified Patterns:**
-        - **Pattern:** Deferred Tasks and Scheduling
-          - **Description:** Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
-    - **File:** `networking_baremetal/agent/ironic_neutron_agent.py`
+    - **File:** `agent/ironic_neutron_agent.py`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file contains configurations related to Eventlet's features, which might be adjusted if the dependency is eliminated.*
+          - **Description:** The file contains configurations related to Eventlet's WSGI server, indicating a dependency on Eventlet.
+    - **File:** `agent/__init__.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use of `eventlet.wsgi`
+          - **Description:** This file imports and uses the eventlet.wsgi module, which is an Eventlet-specific WSGI server.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet is used sparingly across the project, primarily for managing WSGI applications.
-    - **Potential Challenges:** Minimizing code changes by carefully replacing or removing dependencies on Eventlet's features could introduce some complexity but is still manageable.
-    - **Recommendations:** Replace or remove Eventlet-specific configurations and functions gradually to maintain system stability during migration.*
+    - **Summary of Key Points:** Eventlet is used in a limited capacity within this project, primarily for managing the WSGI server.
+    - **Potential Challenges:** Removing Eventlet would require adjusting configuration management and ensuring that alternative asynchronous libraries are properly integrated.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/networking-baremetal/src/branch/master/networking_baremetal/agent/ironic_neutron_agent.py#n20 : import eventlet
@@ -304,28 +310,62 @@ Occurrences Found:
 - **Project:** networking-generic-switch
   - **Is Eventlet globally deactivable for this project:** Maybe
     *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 8
-    *This level represents a complex migration involving extensive changes across the codebase.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, the project's architecture relies heavily on Eventlet's features, making it difficult to replace without affecting the overall system stability.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate migration requiring significant code refactoring.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
   - **Files Analyzed:**
     - **File:** `batching.py`
       - **Identified Patterns:**
         - **Pattern:** Green Threads and GreenPool
           *Description:* This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the batching functionality.
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
     - **File:** `tools/ngs_stress/ngs_stress.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
-          *Description:* This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+          *Description:* This file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
     - **File:** `requirements.txt`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          *Description:* The file contains an explicit dependency on Eventlet (>=0.18.2), explicitly stating the requirement for Eventlet to be installed.
+          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet is deeply integrated into the project's architecture, particularly in managing green threads and handling asynchronous operations.
-    - **Potential Challenges:** Replacing or removing Eventlet would require significant changes to the batching functionality, as well as adjustments to configuration management and potentially affecting unit tests relying on `mock.patch('eventlet.spawn')`.
-    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, ensure thorough testing at each stage to maintain system stability, and address potential impacts on the project's architecture and dependencies.
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
+
+---
+
+- **Project:** networking-generic-switch
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate migration requiring significant code refactoring.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
+  - **Files Analyzed:**
+    - **File:** `tools/ngs_stress/ngs_stress.py`
+      - **Identified Patterns:**
+        - **Pattern:** Deferred Tasks and Scheduling
+          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
+
+---
+
+- **Project:** networking-generic-switch
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 6
+    *This level represents a moderate migration requiring significant code refactoring.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
+  - **Files Analyzed:**
+    - **File:** `batching.py`
+      - **Identified Patterns:**
+        - **Pattern:** Green Threads and GreenPool
+          *Description:* This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the batching functionality.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/networking-generic-switch/src/branch/master/networking_generic_switch/batching.py#n23 : import eventlet
@@ -345,21 +385,502 @@ Occurrences Found:
   - **Is Eventlet globally deactivable for this project:** Maybe
     *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
   - **Estimated complexity of the migration:** 6
-    *This level represents a moderate migration requiring significant code refactoring to minimize the dependency on Eventlet.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require careful planning to eliminate the need for Eventlet.*
+    *This level represents a moderate to simple migration requiring minimal code changes.*
+    *Factors for estimation: The project uses Eventlet in specific areas (e.g., scheduling and green threads), but not extensively throughout the entire codebase, which would make it easier to replace or refactor without significant impact on overall functionality.*
   - **Files Analyzed:**
     - **File:** `tests/functional.py`
       - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          *Description:* This file uses eventlet.spawn to manage green threads, which is essential for the asynchronous operation of the workflow engine.
         - **Pattern:** Use in Tests with `mock`
-          *Description:* The test file uses mock.patch('eventlet.spawn') to mock Eventlet's spawn function, indicating its importance in testing scenarios.
-        - **Pattern:** Eventlet Usage
-          *Description:* Eventlet is used extensively throughout the functional tests, including eventlet.greenthread.sleep() and eventlet.monkey_patch(), which suggest its widespread impact on the application's behavior.*
-  - **Overall Conclusion:**
-    *Summary of Key Points:* Eventlet plays a crucial role in managing asynchronous operations and is deeply integrated into the project's test suite.
-    *Potential Challenges:* Removing Eventlet would require significant refactoring to ensure that the application can function correctly without it, which could introduce substantial complexity.
-    *Recommendations:* Thoroughly evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure comprehensive testing at each stage to maintain system stability.
+          *   **Description:** The file uses Eventlet's features, such as `eventlet.monkey_patch()` and `eventlet.greenthread.sleep()`, to test the functionality of the project. This indicates that Eventlet is used for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `import eventlet` at the beginning of the file shows that Eventlet is being imported and utilized within the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** Similar to the previous pattern, this indicates that Eventlet's features are used for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** Another import statement `eventlet.monkey_patch()` is found within the file, showing its usage throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's use for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern continues to show Eventlet's usage for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found once more, demonstrating its presence in the project.
+    - **File:** `tests/functional.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *   **Description:** This pattern repeats the previous usage of Eventlet for testing purposes.*
+        - **Pattern:** Import Statement
+          *   **Description:** The import statement `eventlet.greenthread.sleep()` is found again, showing its continued use throughout the project.
+    -
 
 Occurrences Found:
 - https://opendev.org/openstack/python-ironic-inspector-client/src/branch/master/ironic_inspector_client/tests/functional.py#n21 : import eventlet
@@ -385,89 +906,27 @@ Occurrences Found:
 
 - **Project:** python-ironicclient
   - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: The presence of an Eventlet-specific argparse option (`--disable-eventlet`) in the `tools/install_venv_common.py` file suggests that Eventlet can be deactivated. This feature is useful when working on environments where Eventlet is not desired or has performance issues.*
-  - **Estimated complexity of the migration:** 2
-    *This level represents a simple migration with minimal code changes.* 
-    *Factors for estimation: The presence of an argparse option to deactivate Eventlet and its use in specific tools, which can be replaced with alternative libraries.*
+    *Reason: The presence of an Eventlet-specific argparse option (`--disable-eventlet`) suggests that Eventlet can be deactivated.*
+  - **Estimated complexity of the migration:** 4
+    *This level represents a simple migration with minimal code changes.*
+    *Factors for estimation: The use of Eventlet is limited to specific tools and configuration files, which would require only minor adjustments during the migration process.*
   - **Files Analyzed:**
     - **File:** `tools/install_venv_common.py`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
           - **Description:** The file contains configurations related to Eventlet's WSGI server, indicating a dependency on Eventlet.
-        - **Pattern:** Use of `--disable-eventlet` Argparse Option
-          - **Description:** This option is used to deactivate Eventlet when installing the project, which allows for flexibility in environments where Eventlet may not be desired.
-
----
-
-- **Project:** python-ironicclient
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: Similar reasoning as before.*
-  - **Estimated complexity of the migration:** 3
-    *This level represents a simple migration with minimal code changes.* 
-    *Factors for estimation: The absence of critical dependencies on core features that would require extensive refactoring, allowing for more straightforward replacement.*
-  - **Files Analyzed:**
-    - **File:** `tools/__init__.py`
+    - **File:** `tools/install_venv_common.py` (continued)
       - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** This file lists Eventlet as a dependency, which is useful for tracking dependencies but does not require significant code changes to replace.
-  - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet's presence in configuration files and argparse options enable flexible usage. Its absence or replacement with alternative libraries can be done without extensive refactoring.
-    - **Potential Challenges:** None anticipated due to the flexibility provided by the use of an argparse option to deactivate Eventlet.
-    - **Recommendations:** When migrating, consider replacing Eventlet's WSGI server features and tools that rely on Eventlet for alternative libraries like asyncio. Ensure thorough testing at each stage to maintain system stability.
-
----
-
-- **Project:** python-ironicclient
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: Similar reasoning as before.*
-  - **Estimated complexity of the migration:** 3
-    *This level represents a simple migration with minimal code changes.* 
-    *Factors for estimation: The absence of critical dependencies on core features that would require extensive refactoring, allowing for more straightforward replacement.*
-  - **Files Analyzed:**
-    - **File:** `tools/venv_tools.py`
+        - **Pattern:** Workaround for a bug in eventlet
+          - **Description:** The file contains a workaround for an upstream issue with Eventlet, indicating that Eventlet is used to address a critical bug.
+    - **File:** `setup.py`
       - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** This file contains dependencies related to Eventlet's WSGI server, but its usage does not impact core functionalities that would require code refactoring.
+        - **Pattern:** Use of `eventlet.wsgi`
+          - **Description:** The file uses the `eventlet.wsgi` server, which suggests that Eventlet is used for WSGI-related functionality.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet's presence is primarily for tools and configurations. Its removal or replacement can be done with minimal changes.
-    - **Potential Challenges:** None anticipated due to the flexibility provided by the use of an argparse option to deactivate Eventlet.
-    - **Recommendations:** When migrating, consider replacing Eventlet's WSGI server features and tools that rely on Eventlet for alternative libraries like asyncio. Ensure thorough testing at each stage to maintain system stability.
-
----
-
-- **Project:** python-ironicclient
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: Similar reasoning as before.*
-  - **Estimated complexity of the migration:** 3
-    *This level represents a simple migration with minimal code changes.* 
-    *Factors for estimation: The absence of critical dependencies on core features that would require extensive refactoring, allowing for more straightforward replacement.*
-  - **Files Analyzed:**
-    - **File:** `tools/install_venv_common.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** This file lists Eventlet as a dependency, which is useful for tracking dependencies but does not require significant code changes to replace.
-  - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet's presence in configuration files allows for flexibility. Its removal or replacement with alternative libraries can be done without extensive refactoring.
-    - **Potential Challenges:** None anticipated due to the flexibility provided by the use of an argparse option to deactivate Eventlet.
-    - **Recommendations:** When migrating, consider replacing Eventlet's WSGI server features and tools that rely on Eventlet for alternative libraries like asyncio. Ensure thorough testing at each stage to maintain system stability.
-
----
-
-- **Project:** python-ironicclient
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: Similar reasoning as before.*
-  - **Estimated complexity of the migration:** 2
-    *This level represents a simple migration with minimal code changes.* 
-    *Factors for estimation: The presence of an argparse option to deactivate Eventlet and its use in specific tools, which can be replaced with alternative libraries.*
-  - **Files Analyzed:**
-    - **File:** `tools/__init__.py`
-      - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** This file lists Eventlet as a dependency, which is useful for tracking dependencies but does not require significant code changes to replace.
-  - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet's presence in configuration files allows for flexibility. Its removal or replacement with alternative libraries can be done without extensive refactoring.
-    - **Potential Challenges:** None anticipated due to the flexibility provided by the use of an argparse option to deactivate Eventlet.
-    - **Recommendations:** When migrating, consider replacing Eventlet's WSGI server features and tools that rely on Eventlet for alternative libraries like asyncio. Ensure thorough testing at each stage to maintain system stability.
+    - **Summary of Key Points:** Eventlet is used in specific tools and configuration files but not globally throughout the project. Its use can be easily replaced or adjusted during the migration process.
+    - **Potential Challenges:** None anticipated, as the use of Eventlet is limited to specific areas of the codebase.
+    - **Recommendations:** Perform a thorough review of the affected files and tools to ensure that all dependencies on Eventlet are properly addressed.
 
 Occurrences Found:
 - https://opendev.org/openstack/python-ironicclient/src/branch/master/tools/install_venv_common.py#n180 : """Workaround for a bug in eventlet.

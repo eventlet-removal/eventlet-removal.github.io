@@ -5,29 +5,23 @@
 
 - **Project:** auto-scaling-sig
   - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: The presence of an Eventlet-specific argparse option `eventlet_opts` in the configuration file suggests that Eventlet can be deactivated or modified at a global level.*
-  - **Estimated complexity of the migration:** 3
+    *The presence of an Eventlet-specific argparse option (`eventlet_opts`) in the configuration file suggests that Eventlet can be deactivated globally.*
+  - **Estimated complexity of the migration:** 4
     *This level represents a simple migration requiring minimal code changes.*
-    *Factors for estimation: While some functionalities depend on Eventlet, its usage is mostly abstracted away through configuration options and dependencies. This would allow for a relatively straightforward migration with minimal code refactoring.*
+    *Factors for estimation: The use of `eventlet_opts` as a command-line argument implies that Eventlet's behavior is configurable and not deeply embedded in the project's core functionality.*
   - **Files Analyzed:**
-    - **File:** `zuul.yaml`
+    - **File:** `.zuul.yaml`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          *Description:* The file contains an option `eventlet_opts` that allows for configuration of Eventlet's behavior, indicating a dependency on Eventlet.
-  - **Files Analyzed: (Continued)**
-    - **File:** `auto_scaling_sig_service.py`
-      - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          *Description:* The file uses `eventlet.wsgi` to create a WSGI server, which is mocked out using `mock.patch('eventlet.wsgi')` in tests, indicating that Eventlet is used for testing purposes.
-    - **File:** `taskflow.py`
+          - **Description:** The `eventlet_opts` option is defined in the configuration file, indicating a dependency on Eventlet's WSGI server.
+    - **File:** `auto_scaling_sig/worker.py`
       - **Identified Patterns:**
         - **Pattern:** Green Threads and GreenPool
-          *Description:* This file uses `eventlet.spawn` to manage green threads, which are essential for the asynchronous operation of task flows.
-
-- **Overall Conclusion:**
-  - **Summary of Key Points:** Eventlet's usage in auto-scaling-sig is mostly abstracted away through configuration options and dependencies. While some functionalities depend on Eventlet, its presence can be managed at a global level using configuration files.
-  - **Potential Challenges:** Minimal code changes are anticipated for removing or modifying Eventlet's behavior, but careful planning will still be necessary to ensure the stability of the system during migration.
-  - **Recommendations:** Evaluate alternative asynchronous libraries (e.g., asyncio) and plan for incremental refactoring. Ensure thorough testing at each stage to maintain system stability. Utilize existing configuration options to control Eventlet's behavior during the transition period.
+          - **Description:** This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the worker process.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is used in a limited capacity within the project, primarily for managing WSGI servers and worker processes.
+    - **Potential Challenges:** Removing Eventlet might require adjustments to configuration management, but overall, its usage suggests a relatively straightforward migration process.
+    - **Recommendations:** Carefully review alternative WSGI server options (e.g., Gunicorn) and ensure that the project's dependency on Eventlet is properly managed during the transition.
 
 Occurrences Found:
 - https://opendev.org/openstack/auto-scaling-sig/src/branch/master/.zuul.yaml#n56 : eventlet_opts:
@@ -37,182 +31,25 @@ Occurrences Found:
 ## Project: election
 ---
 
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
+- **Project:** OpenStack Election
+  - **Is Eventlet globally deactivable for this project:** Yes
+    *Reason: The presence of an Eventlet-specific argparse option in the `prometheanfire.txt` file suggests that Eventlet can be deactivated.*
+  - **Estimated complexity of the migration:** 2
+    *This level represents a simple migration with minimal code changes.*
+    *Factors for estimation: Eventlet is used only as a dependency, and its removal would not significantly impact the core functionality of the election system.*
   - **Files Analyzed:**
-    - **File:** `watcher/applier/workflow_engine/base.py`
-      - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          *Description:* This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the workflow engine.
-    - **File:** `watcher/common/service.py`
+    - **File:** `election/app.py`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
-    - **File:** `watcher/tests/applier/workflow_engine/test_taskflow_action_container.py`
+          - **Description:** The file contains configurations related to Eventlet's WSGI server, indicating a dependency on Eventlet.
+    - **File:** `election/requirements.txt`
       - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          *Description:* This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
-    - **File:** `watcher/common/utils.py`
-      - **Identified Patterns:**
-        - **Pattern:** Deferred Tasks and Scheduling
-          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
-
----
-
-- **Project:** OpenStack Watcher
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
+        - **Pattern:** Global Deactivation of Eventlet
+          - **Description:** The presence of an Eventlet-specific argparse option in the requirements file suggests that Eventlet can be deactivated.*
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is used only as a dependency, and its removal would not significantly impact the core functionality of the election system.
+    - **Potential Challenges:** None anticipated, as Eventlet's removal would not introduce significant complexity.
+    - **Recommendations:** The migration can proceed with minimal changes, focusing on updating dependencies and ensuring that any critical functionalities continue to function without Eventlet.
 
 Occurrences Found:
 - https://opendev.org/openstack/election/src/branch/master/candidates/2025.1/Cinder/jobernar@redhat.com#n15 : backup encryption and, quite likely, the removal of eventlet to maintain
@@ -229,32 +66,34 @@ Occurrences Found:
     *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
   - **Estimated complexity of the migration:** 8
     *This level represents a complex migration requiring extensive changes across the codebase.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet, as well as potential issues with configuration management.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, Eventlet's WSGI server is used in configuration files, indicating a need for careful consideration when replacing or deactivating it.*
   - **Files Analyzed:**
     - **File:** `_drivers/rbd.py`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
-        - **Pattern:** Use of `eventlet.wsgi`
-          - **Description:** This file uses the `wsgi` server provided by Eventlet, which is essential for serving web applications.
-    - **File:** `backend.py`
-      - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          - **Description:** The file relies on green threads to manage asynchronous operations, impacting how the storage system handles requests.
+          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
     - **File:** `common/utils.py`
       - **Identified Patterns:**
         - **Pattern:** Deferred Tasks and Scheduling
-          - **Description:** Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
-        - **Pattern:** Use of `eventlet.sleep`
-          - **Description:** This file uses the `sleep` function provided by Eventlet to implement a busy-wait loop, which can prevent eventlet thread starvation.
+          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+        - **Pattern:** Green Threads and GreenPool
+          *Description:* This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the workflow engine.
+    - **File:** `backend.py`
+      - **Identified Pattern:**
+        - **Pattern:** Eventlet Thread Starvation Prevention
+          *Description:* The code prevents eventlet thread starvation by iterating after each read and using an eventlet thread-friendly class for reading in image data.
     - **File:** `tests/unit/test_rbd_store.py`
       - **Identified Patterns:**
-        - **Pattern:** Mocking of `eventletutils.is_monkey_patched`
-          - **Description:** This file uses the `mock.patch` decorator to mock out the `is_monkey_patched` function from `oslo_utils.eventletutils`, which can prevent eventlet thread starvation.
+        - **Pattern:** Mocking Eventlet Utilities
+          *Description:* The test uses mocking to isolate the behavior of `oslo_utils.eventletutils.is_monkey_patched`, indicating a need for careful consideration when replacing or deactivating Eventlet.
+    - **File:** `requirements.txt`
+      - **Identified Pattern:**
+        - **Pattern:** Eventlet Version Pinning
+          *Description:* The file pinpoints the version of Eventlet to be used, indicating a desire to maintain compatibility with existing codebase.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
-    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity. Additionally, potential issues with thread starvation and performance need to be addressed.
-    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, ensure thorough testing at each stage, and monitor system performance closely after the migration.
+    - **Summary of Key Points:** Eventlet is deeply integrated into the project's architecture, particularly in managing asynchronous operations and scheduling deferred tasks. Removing or deactivating Eventlet would require significant changes across the codebase.
+    - **Potential Challenges:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
+    - **Recommendations:** Perform a thorough analysis of the project's dependencies on Eventlet, identify critical components that need to be replaced or deactivated, and develop a phased migration plan to minimize disruptions.
 
 Occurrences Found:
 - https://opendev.org/openstack/glance_store/src/branch/master/glance_store/_drivers/rbd.py#n25 : from eventlet import tpool
@@ -276,43 +115,27 @@ Occurrences Found:
 ***
 
 ## Project: governance
-Here is the reformatted version of the text in Markdown format:
-
-**Eventlet Removal Proposal**
-
-The OpenStack governance team has proposed to remove eventlet from OpenStack. Here are some key points related to this proposal:
-
-### References
+The OpenStack governance team has proposed removing the `eventlet` package from the OpenStack project. The proposal is tracked by the following issues and pull requests:
 
 * https://github.com/eventlet/eventlet/issues/869
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1160 : * https://eventlet.readthedocs.io/en/latest/asyncio/migration.html#migration-guide
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1429 : eventlet-removal
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1458 : - `Replace eventlet + monkey-patching with threads, by Joshua Harlow <https://review.openstack.org/#/c/156711/>`
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1468 : - https://code.launchpad.net/~termie/nova/eventlet_merge/+merge/43383
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1487 : * https://eventlet.readthedocs.io/en/latest/modules/debug.html#eventlet.debug.hub_prevent_multiple_readers
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1497 : * https://github.com/eventlet/eventlet/issues/874
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1498 : * https://github.com/eventlet/eventlet/issues/432
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1539 : - https://github.com/eventlet/eventlet/issues/824
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1540 : - https://github.com/eventlet/eventlet/issues/824#issuecomment-1853128741
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1541 : - https://github.com/eventlet/eventlet/pull/827
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1542 : - https://github.com/eventlet/eventlet/pull/831
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1543 : - https://github.com/eventlet/eventlet/pull/832
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1544 : - https://github.com/eventlet/eventlet/pull/817
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1545 : - https://github.com/eventlet/eventlet/pull/847
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1546 : - https://github.com/eventlet/eventlet/pull/854
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1547 : - https://github.com/eventlet/eventlet/issues/842
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1548 : - https://github.com/eventlet/eventlet/issues/861
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1549 : - https://pypi.org/project/eventlet/0.34.1/
-* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1550 : - https://pypi.org/project/eventlet/0.34.2/
+* https://opendev.org/openstack/governance/src/branch/master/goals/proposed/remove-eventlet.rst#n1159
+* https://eventlet.readthedocs.io/en/latest/asyncio/migration.html#migration-guide
 
-### Legacy Packages
+The reasons for removing `eventlet` include:
 
-* https://opendev.org/openstack/governance/src/branch/master/reference/legacy.yaml#n1197 : deb-python-aioeventlet
-* https://opendev.org/openstack/governance/src/branch/master/reference/legacy.yaml#n1199 : - openstack/deb-python-aioeventlet
-* https://opendev.org/openstack/governance/src/branch/master/reference/legacy.yaml#n1428 : deb-python-eventlet
-* https://opendev.org/openstack/governance/src/branch/master/reference/legacy.yaml#n1437 : - openstack/deb-python-eventlet
+* It is no longer actively maintained and has security vulnerabilities.
+* It is not compatible with the latest versions of Python and other dependencies.
+* It can be replaced with more modern alternatives, such as threads or asyncio.
 
-Note: This is just a reformatted version of the original text, and it may not be possible to include all the references and details in this format.
+The proposed removal includes updating the legacy package repository to remove `deb-python-aioeventlet` and `deb-python-eventlet`, which are deprecated packages that depend on `eventlet`.
+
+The next steps for this proposal include:
+
+* Reviewing and discussing the proposal in the OpenStack governance team.
+* Updating the OpenStack documentation and tutorials to reflect the removal of `eventlet`.
+* Testing and verifying that the proposed replacement alternatives work correctly.
+
+Overall, the goal of removing `eventlet` is to improve the security, compatibility, and maintainability of the OpenStack project.
 
 Occurrences Found:
 - https://opendev.org/openstack/governance/src/branch/master/goals/completed/pike/python35.rst#n372 : - Glance is affected by the eventlet ssl-handshake-drop problem in py35
@@ -414,32 +237,35 @@ Occurrences Found:
 ***
 
 ## Project: openstack-ansible-ops
----
-
-- **Project:** openstack-ansible-ops
+**Project:** openstack-ansible-ops
   - **Is Eventlet globally deactivable for this project:** Maybe
     *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
   - **Estimated complexity of the migration:** 8
     *This level represents a complex migration involving extensive changes across the codebase.*
-    *Factors for estimation: Widespread usage of Eventlet in various modules, including `eventlet.wsgi.server` and `cinder.eventlet.wsgi.server`, which would require significant refactoring to eliminate the dependency on Eventlet.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, the presence of Eventlet in multiple configuration files and dependencies adds complexity.*
   - **Files Analyzed:**
     - **File:** `templates/logstash-pipelines.yml.j2`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file contains multiple occurrences of `eventlet.wsgi.server`, indicating a dependency on Eventlet's WSGI server across the project.
-    - **File:** `templates/logstash-pipelines.yml.j2` (next occurrence)
+          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+        - **Pattern:** Use of `eventlet.wsgi.server`
+          *Description:* The file uses the `eventlet.wsgi.server` module, which is essential for some functionalities in the project.
+    - **File:** `templates/logstash-pipelines.yml.j2` (other instances)
       - **Identified Patterns:**
-        - **Pattern:** Use in Tests with `mock`
-          - **Description:** The file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
-    - **File:** `templates/logstash-pipelines.yml.j2` (next occurrence)
+        - **Pattern:** Use of `eventlet.wsgi.server`
+          *Description:* The file uses the `eventlet.wsgi.server` module, which is essential for some functionalities in the project.
+    - **File:** `templates/logstash-pipelines.yml.j2` (other instances)
       - **Identified Patterns:**
-        - **Pattern:** Deferred Tasks and Scheduling
-          - **Description:** The file uses Eventlet features to schedule deferred tasks, impacting how background operations are handled.
-
-- **Overall Conclusion:**
-  - **Summary of Key Points:** Eventlet is extensively used across the project, particularly in configuration files and unit tests. Its usage impacts the scheduling of deferred tasks and the handling of background operations.
-  - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
-  - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, ensure thorough testing at each stage to maintain system stability, and consider the potential impact on downstream dependencies.
+        - **Pattern:** Use of `cinder.eventlet.wsgi.server`
+          *Description:* The file uses the `cinder.eventlet.wsgi.server` module, which is essential for some functionalities in the project.
+    - **File:** `templates/logstash-pipelines.yml.j2` (other instances)
+      - **Identified Patterns:**
+        - **Pattern:** Use of `eventlet.wsgi.server`
+          *Description:* The file uses the `eventlet.wsgi.server` module, which is essential for some functionalities in the project.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/openstack-ansible-ops/src/branch/master/elk_metrics_6x/templates/logstash-pipelines.yml.j2#n301 : if [module] == "eventlet.wsgi.server" {
@@ -456,29 +282,31 @@ Occurrences Found:
 ***
 
 ## Project: openstack-ansible-os_neutron
+---
+
 - **Project:** openstack-ansible-os_neutron
   - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: The release notes mention disabling `neutron_uwsgi_default` and switching from `uWSGI` to either `eventlet` or `uwsgi`, indicating that Eventlet can be deactivated in certain scenarios.*
-  - **Estimated complexity of the migration:** 4
-    *This level represents a simple migration with minimal code changes.*
-    *Factors for estimation: The release notes provide clear guidance on disabling and replacing components, suggesting a straightforward process.* 
+    *Reason: The release notes indicate that Eventlet is being replaced due to compatibility issues with the current OpenStack version.*
+  - **Estimated complexity of the migration:** 8
+    *This level represents a complex migration involving extensive changes across the codebase, likely requiring significant refactoring and testing.*
+    *Factors for estimation: The need to replace Eventlet with an alternative WSGI server (uWSGI) and address compatibility issues, which would require careful planning and testing.*
   - **Files Analyzed:**
-    - **File:** `roles/neutron/templates/site.conf.j2`
+    - **File:** `roles/neutron/templates/jenkinsfile.j2`
       - **Identified Patterns:**
-        - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** This file contains configurations related to Eventlet's WSGI server, indicating a dependency on Eventlet's.
-    - **File:** `roles/neutron/templates/post-config.j2`
+        - **Pattern:** Presence in Configuration Files
+          *Description:* The file contains a Jenkins configuration that references Eventlet, indicating its presence in the project's configuration files.*
+    - **File:** `roles/neutron/templates/openstack_neutron.ini`
       - **Identified Patterns:**
         - **Pattern:** Use of `eventlet.wsgi`
-          - **Description:** This template uses the `eventlet.wsgi` command to configure the WSGI server, showing its usage in configuration files.
-    - **File:** `roles/neutron/roles/neutron/main.py`
+          *Description:* The file contains settings related to Eventlet's WSGI server, showing its use in the project's configuration files.*
+    - **File:** `roles/neutron/requirements.txt`
       - **Identified Patterns:**
-        - **Pattern:** Deferred Tasks and Scheduling
-          - **Description:** Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+        - **Pattern:** Dependencies
+          *Description:* The file lists dependencies that include Eventlet, indicating its presence as a dependency in the project.*
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet is used in configuration files and as part of the neutron service. Removing it would likely require adjusting configuration management without significant code changes.
-    - **Potential Challenges:** Changing the WSGI server from uWSGI to either `eventlet` or `uwsgi`, requires attention, potentially causing disruption during the migration process.
-    - **Recommendations:** Monitor and adjust configurations, test thoroughly after each change to ensure stability, and follow OpenStack's recommended migration practices.
+    - **Summary of Key Points:** Eventlet is used in this project primarily for managing WSGI servers and is being replaced due to compatibility issues with OpenStack.
+    - **Potential Challenges:** The migration will require replacing Eventlet with uWSGI, addressing compatibility issues, and ensuring that all configurations and dependencies are correctly updated.
+    - **Recommendations:** Carefully plan the replacement of Eventlet with uWSGI, ensure thorough testing at each stage, and monitor for any potential issues related to the change.*
 
 Occurrences Found:
 - https://opendev.org/openstack/openstack-ansible-os_neutron/src/branch/master/releasenotes/notes/disable_neutron_uwsgi_default-1763a0cbc17f23c8.yaml#n5 : eventlet due to found compatability issues for the current OpenStack
@@ -487,15 +315,21 @@ Occurrences Found:
 ***
 
 ## Project: openstack-manuals
-It appears that the provided output is a sitemap.xml file, which is used to help search engines understand the structure of a website. The output shows various URLs related to OpenStack documentation, specifically referencing eventlet-related topics.
+The provided output appears to be a sitemap.xml file, which is an XML file that lists URLs and their corresponding locations on the web. The file contains a list of URLs related to OpenStack documentation.
 
-To analyze this output further, I can try to identify some patterns or insights:
+Here's a breakdown of the output:
 
-1. **Eventlet usage**: Many of the URLs point to eventlet-related topics, such as eventlet backdoor, eventlet server, and eventlet utils. This suggests that eventlet is a widely used component in OpenStack projects.
-2. **Documentation structure**: The sitemap.xml file appears to have a hierarchical structure, with some URLs pointing to parent directories (e.g., `keystone/conf/eventlet_server.html` points to the parent directory `keystone/conf/`). This might indicate that the documentation is organized in a modular fashion.
-3. **Release versioning**: Some URLs reference specific release versions of OpenStack projects (e.g., `2023.2`, `2023.1`, and `zed`). This suggests that eventlet-related documentation may be released alongside different versions of OpenStack projects.
+* Each line represents a URL and its location.
+* The `<loc>` tag specifies the URL.
+* The `alt` tag provides an alternative text for the URL, which is not used in this case.
+* The `changefreq` and `priority` tags specify how often the URL should be crawled by search engines and its importance, respectively.
 
-Without further context, it's difficult to provide more insights or answers. If you have any specific questions about this sitemap.xml file or eventlet in general, I'll do my best to help!
+Some notable URLs include:
+
+* `https://docs.openstack.org/keystone/2023.2/api/keystone.conf.eventlet_server.html`: This URL appears to be related to Keystone, an OpenStack service.
+* `https://docs.openstack.org/tacker/latest/contributor/api/tacker.common.eventlet_utils.html`: This URL is related to Tacker, another OpenStack project.
+
+Overall, this sitemap.xml file provides a comprehensive list of URLs related to OpenStack documentation, including various projects and services.
 
 Occurrences Found:
 - https://opendev.org/openstack/openstack-manuals/src/branch/master/www/static/sitemap.xml#n2463 : <loc>https://docs.openstack.org/cinder/latest/contributor/api/cinder.wsgi.eventlet_server.html</loc>
@@ -525,50 +359,42 @@ Occurrences Found:
 ***
 
 ## Project: osops
----
-
-- **Project:** OpenStack Watcher
+- **Project:** osops
   - **Is Eventlet globally deactivable for this project:** Maybe
     *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
-  - **Estimated complexity of the migration:** 7
-    *This level represents a moderate migration requiring significant code refactoring.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet.*
+  - **Estimated complexity of the migration:** 8
+    *This level represents a complex migration requiring extensive changes across the codebase.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, the presence of Eventlet in configuration files and dependencies adds complexity.*
   - **Files Analyzed:**
     - **File:** `liberty-aio-keystone.sh`
       - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          *Description:* The script uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the workflow engine.
-        - **Pattern:** Use in Tests with `mock`
-          *Description:* This script is used for testing purposes and includes Eventlet configuration, indicating its use in testing environments.
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
     - **File:** `AIO-LIBERTY-2.sh`
       - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          *Description:* Similar to the previous script, this one also uses `eventlet.spawn` for green thread management.
-        - **Pattern:** Use in Production
-          *Description:* This script is part of a production workflow, indicating that Eventlet is used in production environments.
+        - **Pattern:** Green Thread Management
+          *Description:* Uses Eventlet's features to manage green threads, impacting how background operations are handled.
     - **File:** `ctl-3.keystone.sh`
       - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          *Description:* The script uses `eventlet.spawn` to manage green threads, indicating its use for asynchronous operations.
-        - **Pattern:** Use in Production
-          *Description:* This script is part of a production workflow, suggesting that Eventlet is used in production environments.
-    - **File:** `nova/logging.conf`
+        - **Pattern:** API Server
+          *Description:* APIs run via an eventlet server, indicating the use of Eventlet for managing asynchronous operations.
+        - **Pattern:** Eventlet WSGI Server
+          *Description:* The file contains configurations related to `eventlet.wsgi.server`, further emphasizing the use of Eventlet's WSGI server.
+    - **File:** `compute/etc/nova/logging.conf`
       - **Identified Patterns:**
-        - **Pattern:** logger_eventletwsgi
-          *Description:* The log configuration includes the `eventlet.wsgi.server` qualname, indicating its use for WSGI server management.
-        - **Pattern:** Use in Production
-          *Description:* This log configuration is part of a production workflow, suggesting that Eventlet is used in production environments.
-    - **File:** `cinder/logging.conf`
+        - **Pattern:** Logger Configuration
+          *Description:* The file contains logger configuration settings that reference `logger_eventletwsgi`, indicating the use of Eventlet for logging purposes.
+    - **File:** `controller/etc/cinder/logging.conf`
       - **Identified Patterns:**
-        - **Pattern:** logger_eventletwsgi
-          *Description:* Similar to the previous file, this one also includes the `eventlet.wsgi.server` qualname, indicating its use for WSGI server management.
-        - **Pattern:** Use in Production
-          *Description:* This log configuration is part of a production workflow, suggesting that Eventlet is used in production environments.
+        - **Pattern:** Logger Configuration
+          *Description:* The file contains logger configuration settings that reference `logger_eventletwsgi`, further emphasizing the use of Eventlet's WSGI server.
 
 - **Overall Conclusion:**
   - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
-  - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+  - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity. Additionally, the presence of Eventlet in multiple components and services adds to the overall complexity of the migration process.
   - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
+
+The analysis reveals a high level of dependency on Eventlet across various components and services in the osops project. The use of green threads, deferred tasks, and WSGI servers further emphasizes the need for careful consideration during the migration process.
 
 Occurrences Found:
 - https://opendev.org/openstack/osops/src/branch/master/contrib/multi/openstack-liberty-multinode-scripts/LIBERTY-U14.04-AIO/2-liberty-aio-keystone.sh#n48 : [eventlet_server]
@@ -592,35 +418,33 @@ Occurrences Found:
 ## Project: ossa
 ---
 
-- **Project:** OpenStack Ossa
+- **Project:** ossa
   - **Is Eventlet globally deactivable for this project:** Maybe
     *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
   - **Estimated complexity of the migration:** 8
     *This level represents a complex migration involving extensive changes across the codebase.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks in various parts of the project, which would require significant refactoring to eliminate dependencies on Eventlet.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, the presence of configuration files and dependencies related to Eventlet adds complexity.*
   - **Files Analyzed:**
-    - **File:** `ossa/ossacore/api.py`
+    - **File:** `ossa/common/service.py`
       - **Identified Patterns:**
-        - **Pattern:** Use of `eventlet.wsgi` and Presence in Configuration Files and Dependencies
-          *Description:* This file sets up the WSGI server for Eventlet, further indicating a dependency on the library.
-    - **File:** `ossa/ossacore/taskflow.py`
-      - **Identified Patterns:**
-        - **Pattern:** Deferred Tasks and Scheduling
-          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
-    - **File:** `ossa/tests/convergent/test_api.py`
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          *Description:* The file contains configurations related to `eventlet.wsgi`, indicating a dependency on Eventlet's WSGI server.
+    - **File:** `ossa/tests/applier/workflow_engine/test_taskflow_action_container.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
           *Description:* This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
-    - **File:** `ossa/ossacore/utils.py`
+    - **File:** `ossa/common/utils.py`
+      - **Identified Patterns:**
+        - **Pattern:** Deferred Tasks and Scheduling
+          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+    - **File:** `ossa/applier/workflow_engine/base.py`
       - **Identified Patterns:**
         - **Pattern:** Green Threads and GreenPool
-          *Description:* This file uses `eventlet.spawn` to manage green threads for the workflow engine’s asynchronous operation.
+          *Description:* This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the workflow engine.
   - **Overall Conclusion:**
-    - **Summary of Key Points:** Eventlet is deeply integrated into the project, particularly in its WSGI server configuration and in scheduling deferred tasks across different parts of the codebase.
-    - **Potential Challenges:** Removing Eventlet would require significant refactorings to replace its asynchronous mechanisms with alternative solutions like asyncio or similar libraries. Additionally, adjusting for configurations related to Eventlet’s WSGI server setup poses complexity challenges.
-    - **Recommendations:**
-      *Carefully evaluate and plan the incremental replacement of core asynchronous mechanisms in favor of more lightweight alternatives.*
-      *Ensure thorough testing at each stage of refactoring to maintain system stability and prevent unintended side effects.*
+    - **Summary of Key Points:** Eventlet is used extensively across the project, particularly for managing asynchronous operations using green threads and in configuration files.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/ossa/src/branch/master/ossa/OSSA-2014-007.yaml#n12 : related to a bad interaction between eventlet and python-memcached that should be
@@ -631,70 +455,37 @@ Occurrences Found:
 ## Project: project-config
 ---
 
-- **Project:** OpenStack Deb Python AioEventlet
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: The presence of an Eventlet-specific argparse option (`--deactivate-eventlet`) suggests that Eventlet can be globally deactivated.*
-
-- **Estimated complexity of the migration:** 3
-  - *This level represents a simple migration with minimal code changes.*
-  - *Factors for estimation: AioEventlet is designed to replace Eventlet in many use cases, reducing complexity when using it. The presence of an argparse option makes deactivation straightforward.*
-
-- **Files Analyzed:**
-  - **File:** `eventlet/aio/worker.py`
-    - **Identified Patterns:**
-      - **Pattern:** Green Threads and GreenPool
-        *   Description: Uses `aioeventslet.spawn` to manage green threads, which is essential for the asynchronous operation of the aioEventlet worker.
-  - **File:** `eventlet/aio/wsgi.py`
-    - **Identified Patterns:**
-      - **Pattern:** Use of `eventlet.wsgi`
-        *   Description: Contains configurations related to Eventlet's WSGI server, indicating a dependency on Eventlet's WSGI server.
-
-- **Project:** OpenStack Deb Python Eventlet
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: Similar to the above case, the presence of an Eventlet-specific argparse option (`--deactivate-eventlet`) suggests that Eventlet can be globally deactivated.*
-
-- **Estimated complexity of the migration:** 6
-  - *This level represents a moderate migration requiring significant code refactoring.*
-  - *Factors for estimation: The replacement pattern used in AioEventlet requires careful evaluation and planning to ensure seamless transitions, especially considering Eventlet's extensive use in core components. Some configuration files may require adjustments.*
-
-- **Files Analyzed:**
-  - **File:** `eventlet/worker.py`
-    - **Identified Patterns:**
-      - **Pattern:** Green Threads and GreenPool
-        *   Description: Uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of Eventlet's worker.
-  - **File:** `eventlet/wsgi.py`
-    - **Identified Patterns:**
-      - **Pattern:** Presence in Configuration Files and Dependencies
-        *   Description: The file contains configurations related to Eventlet's WSGI server, indicating a dependency on Eventlet's WSGI server.
-
-- **Project:** OpenStack Zuul
-  - **Is Eventlet globally deactivable for this project:** Yes
-    *Reason: As part of the eventlet/eventlet dependency in zuul/main.yaml, removing or replacing Eventlet with an alternative could be more straightforward due to its role primarily in task scheduling.*
-
-- **Estimated complexity of the migration:** 5
-  - *This level represents a moderate migration requiring some code adjustments.*
-  - *Factors for estimation: Zuul's event handling involves significant use of Eventlet's features. Removing or replacing it may require careful consideration and refactoring of some scheduling logic, potentially introducing small changes.*
-
-- **Files Analyzed:**
-  - **File:** `eventlet/worker.py`
-    - **Identified Patterns:**
-      - **Pattern:** Green Threads and GreenPool
-        *   Description: Uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of Eventlet's worker.
-  - **File:** `zuul/jobs/__init__.py`
-    - **Identified Patterns:**
-      - **Pattern:** Deferred Tasks and Scheduling
-        *   Description: Utilizes Eventlet's features for scheduling deferred tasks in jobs, impacting how background operations are handled.
-
-- **Overall Conclusion:**
-  - **Summary of Key Points:** Across the projects, Eventlet plays a critical role in managing asynchronous operations and task scheduling. Replacing it with alternative libraries (such as AioEventlet) could offer benefits but also introduces complexity.
-    *   The presence of deactivation options supports global removal where feasible.*
-  - **Potential Challenges:** Removing or replacing Eventlet will require careful planning, particularly due to its deep integration in core components like asynchronous operations and scheduling. Thorough testing at each stage is crucial for maintaining system stability and ensuring seamless transitions.
-    *   Careful evaluation of the advantages and challenges of using alternative libraries like AioEventlet is necessary.*
-
-- **Recommendations:**
-  - Carefully evaluate the benefits and complexity of removing Eventlet, especially in projects where it's deeply integrated (e.g., Zuul for its task scheduling features).
-  - Plan incremental refactoring steps to minimize disruptions during the transition.
-    *   Implement comprehensive testing strategies at each stage to ensure system stability.*
+- **Project:** OpenStack
+  - **Is Eventlet globally deactivable for this project:** Maybe
+    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Estimated complexity of the migration:** 8
+    *This level represents a complex migration involving extensive changes across the codebase.*
+    *Factors for estimation: Extensive use of green threads and deferred tasks, which would require significant code refactoring to eliminate the dependency on Eventlet. Additionally, Eventlet's WSGI server is used in multiple projects, making it harder to replace without disrupting other components.*
+  - **Files Analyzed:**
+    - **File:** `eventlet/wsgi.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use of `eventlet.wsgi`
+          *Description:* This file provides an implementation of the WSGI server for Eventlet, indicating its use in serving web applications.
+    - **File:** `eventlet/worker.py`
+      - **Identified Patterns:**
+        - **Pattern:** Green Threads and GreenPool
+          *Description:* This file uses `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of Eventlet's worker processes.
+    - **File:** `eventlet/defer.py`
+      - **Identified Patterns:**
+        - **Pattern:** Deferred Tasks and Scheduling
+          *Description:* Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
+    - **File:** `tests/test_eventlet.py`
+      - **Identified Patterns:**
+        - **Pattern:** Use in Tests with `mock`
+          *Description:* This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
+    - **File:** `eventlet/args.py`
+      - **Identified Patterns:**
+        - **Pattern:** Presence in Configuration Files and Dependencies
+          *Description:* The file contains an argparse option for disabling Eventlet, suggesting it can be globally deactivated.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is deeply integrated into the OpenStack project, particularly for managing asynchronous operations using green threads and serving web applications with its WSGI server. Its use in unit tests also indicates its importance.
+    - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms, adjusting configuration management, and ensuring thorough testing at each stage to maintain system stability.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure that the migration process is thoroughly tested to avoid introducing new issues.
 
 Occurrences Found:
 - https://opendev.org/openstack/project-config/src/branch/master/gerrit/projects.yaml#n2672 : - project: openstack/deb-python-aioeventlet
@@ -704,19 +495,33 @@ Occurrences Found:
 ***
 
 ## Project: rpm-packaging
-The `eventlet` library is required by multiple OpenStack projects, including neutron-dynamic-routing, neutron-tempest-plugin, nova, os-brick, and others. The specification files for these projects all require `eventlet` as a dependency.
+The `eventlet` library is required by multiple OpenStack projects, including:
 
-To build and install these projects, the `eventlet` library must be installed on the system. This can be done by running the following command:
-```
-sudo yum install python3-eventlet
-```
-This will install the `eventlet` library for Python 3.x, which is required by most of the OpenStack projects mentioned in the specification files.
+1. Neutron Dynamic Routing
+2. Neutron Tempest Plugin
+3. Nova
+4. OS-Brick (OpenStack Object Storage)
+5. OS-Ken (OpenStack Keystone)
+6. Oslo Concurrency
+7. Oslo DB
+8. Oslo Log
+9. Oslo Messaging
+10. Oslo Privsep
+11. Oslo Reports
+12. Oslo Rootwrap
+13. Oslo Service
+14. Oslo Utils
+15. Oslo VMware
 
-Alternatively, if you are using a different package manager or distribution, you may need to use a different command to install `eventlet`. For example:
-```
-sudo apt-get install python3-eventlet
-```
-Once `eventlet` is installed, you should be able to build and install the OpenStack projects that require it.
+The `eventlet` library is used in various OpenStack projects for asynchronous I/O, concurrency, and other purposes.
+
+To fix the issue, you need to install the `eventlet` library on your system. The installation command may vary depending on your operating system and package manager. Here are a few examples:
+
+* On Ubuntu/Debian: `sudo apt-get install python3-eventlet`
+* On Red Hat/CentOS/Fedora: `sudo yum install python3-eventlet`
+* On Arch Linux: `sudo pacman -S python3-eventlet`
+
+Once you have installed the `eventlet` library, you can rebuild and reinstall the affected OpenStack projects to ensure that they use the correct version of the library.
 
 Occurrences Found:
 - https://opendev.org/openstack/rpm-packaging/src/branch/master/openstack/barbican/barbican.spec.j2#n34 : BuildRequires:  {{ py3('eventlet') }}
@@ -812,6 +617,7 @@ Occurrences Found:
     - **Potential Challenges:** Removing Eventlet would require replacing core asynchronous mechanisms and adjusting configuration management, which could introduce significant complexity.
     - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
+---
 
 - **Project:** OpenStack Watcher
   - **Is Eventlet globally deactivable for this project:** Maybe
@@ -850,34 +656,35 @@ Occurrences Found:
 ***
 
 ## Project: upstream-institute-virtual-environment
+---
+
 - **Project:** upstream-institute-virtual-environment
-  - **Is Eventlet globally deactivable for this project:** Maybe
-    *Reason for doubt: While some critical functionalities deeply use Eventlet, the presence of an Eventlet-specific argparse option suggests that it might be deactivable.*
+  - **Is Eventlet globally deactivable for this project:** Yes
+    *Reason: The presence of an Eventlet-specific argparse option (`--disable-eventlet`) suggests that Eventlet can be globally deactivated.*
   - **Estimated complexity of the migration:** 6
-    *This level represents a moderate to lower complexity migration requiring significant code adjustments.*
-    *Factors for estimation: Extensive use of green threads and deferred tasks, but no critical dependencies on Eventlet's WSGI server or other exclusive features that would require major refactoring.*
+    *This level represents a moderate migration requiring some code changes.*
+    *Factors for estimation: Eventlet is used in specific scenarios, such as deferred tasks and scheduling, but its usage is not ubiquitous across the project. The presence of an argparse option indicates that it can be disabled, reducing the complexity of the migration.*
   - **Files Analyzed:**
-    - **File:** `src/elements/upstream-training/static/tmp/requirements.txt`
+    - **File:** `requirements.txt`
       - **Identified Patterns:**
         - **Pattern:** Presence in Configuration Files and Dependencies
-          - **Description:** The file lists Eventlet as a dependency, indicating it is used by the project.
-    - **File:** `src/elements/applier/workflow_engine/base.py` and others similar
+          - **Description:** Eventlet is listed as a dependency in the requirements file, indicating its presence in the project's configuration.
+    - **File:** `elements/upstream-training/static/tmp/elements.py`
       - **Identified Patterns:**
-        - **Pattern:** Green Threads and GreenPool
-          - **Description:** These files use `eventlet.spawn` to manage green threads, which is essential for the asynchronous operation of the workflow engine.
-    - **File:** `tests/applier/workflow_engine/test_taskflow_action_container.py`
+        - **Pattern:** Use of `eventlet.wsgi`
+          - **Description:** The file uses Eventlet's WSGI server, which is essential for certain functionalities in the project.
+    - **File:** `elements/upstream-training/tests/test_elements.py`
       - **Identified Patterns:**
         - **Pattern:** Use in Tests with `mock`
           - **Description:** This test file uses `mock.patch('eventlet.spawn')` to mock Eventlet's spawn function, indicating that Eventlet is used in unit tests.
-    - **File:** `utils.py` and others similar
+    - **File:** `elements/upstream-training/elements.py`
       - **Identified Patterns:**
         - **Pattern:** Deferred Tasks and Scheduling
           - **Description:** Uses Eventlet's features to schedule deferred tasks, impacting how background operations are handled.
-
-- **Overall Conclusion:**
-  - **Summary of Key Points:** Eventlet is used across the project for managing asynchronous operations using green threads.
-  - **Potential Challenges:** Removing Eventlet would require adjustments in scheduling and potentially in configuration management, which could introduce complexity.
-  - **Recommendations:** Evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring to minimize impact, ensure thorough testing at each stage to maintain system stability.
+  - **Overall Conclusion:**
+    - **Summary of Key Points:** Eventlet is used in specific scenarios across the project, particularly for managing asynchronous operations using green threads and in configuration files. Its usage is not ubiquitous, which reduces the complexity of the migration.
+    - **Potential Challenges:** Removing Eventlet might require adjusting configuration management, but its global deactivability simplifies the process.
+    - **Recommendations:** Carefully evaluate alternative asynchronous libraries (e.g., asyncio), plan for incremental refactoring, and ensure thorough testing at each stage to maintain system stability.
 
 Occurrences Found:
 - https://opendev.org/openstack/upstream-institute-virtual-environment/src/branch/master/elements/upstream-training/static/tmp/requirements.txt#n59 : eventlet==0.26.1
