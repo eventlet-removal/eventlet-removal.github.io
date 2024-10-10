@@ -41,6 +41,7 @@ $ python3.11 ./tools/analyze.py \
     --beagle eventlet-usage.txt \
     --ollama-url http://localhost:11434/api/generate \
     --ollama-model llama3.2 \
+    --ollama-model-temperature 0.3 \
     --output-dir ./analyze \
     --governance projects.yaml
 ```
