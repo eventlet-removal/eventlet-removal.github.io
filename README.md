@@ -29,7 +29,7 @@ This a tool based on AI, it consume:
 
 Example of usage:
 
-```
+```sh
 # get the OpenStack governance details
 $ wget https://raw.githubusercontent.com/openstack/governance/refs/heads/master/reference/projects.yaml
 # retrieve all the Eventlet occurence in OpenStack, excluding comments
