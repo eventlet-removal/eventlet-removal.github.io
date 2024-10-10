@@ -48,13 +48,16 @@ def read_project_teams(yaml_file):
         return None
 
 
-def analyze_with_ollama(project_name, data, prompt, url, model):
+def analyze_with_ollama(project_name, data, prompt, url, model, temperature=0.3):
     try:
         headers = {"Content-Type": "application/json"}
         payload = {
             "model": model,
-            "prompt": f"{prompt}\n\nData for project {project_name}:\n"
+            "prompt": f"{prompt}\n\nData for project {project_name}: "
             + "\n".join(data),
+            "options": {
+                "temperature": temperature
+            },
             "stream": False,
         }
         response = requests.post(url, json=payload, headers=headers)
@@ -98,6 +101,14 @@ def main():
     )
     parser.add_argument(
         "--ollama-model", type=str, help="Model to use in Ollama", default="llama3.2"
+    )
+    parser.add_argument(
+        "--ollama-model-temperature", type=float,
+        help="""
+        Determine the creativity of the model in Ollama
+        The higher the more creative, the lower the more factual.
+        """,
+        default=0.3
     )
     parser.add_argument(
         "--output-dir",
@@ -155,19 +166,27 @@ def main():
         )
         print(f"Analyzing project {project_name} (Team: {team_name})...")
         analysis_result = analyze_with_ollama(
-            project_name, data, prompt, args.ollama_url, args.ollama_model
+            project_name, data, prompt, args.ollama_url, args.ollama_model, args.ollama_model_temperature
         )
         if analysis_result:
-            team_analysis_results[team_name].append(
-                f"Project: {project_name}\n{analysis_result}\n"
+            list_of_data = [f"- {el}" for el in data]
+            combined_result = (
+                f"## Project: {project_name}\n{analysis_result}\n\nOccurrences Found:\n"
+                + "\n".join(list_of_data)
+                + "\n\n***\n"
             )
+            team_analysis_results[team_name].append(combined_result)
         else:
             print(f"No analysis result for {project_name}")
 
     for team_name, analyses in team_analysis_results.items():
         team_filename = f"{team_name}.md"
         combined_analysis = "\n".join(analyses)
-        store_analysis_result(team_filename, combined_analysis, args.output_dir)
+        store_analysis_result(
+            team_filename,
+            f"# Analysis for Team: {team_name}\n\n" + combined_analysis,
+            args.output_dir,
+        )
 
 
 if __name__ == "__main__":
