@@ -1,0 +1,41 @@
+---
+layout: base
+---
+<!-- Sidebar -->
+<aside class="fixed left-0 h-screen w-64 bg-gray-900 shadow-lg z-20 hidden md:block">
+    <button id="sidebarClose" class="absolute top-4 right-4 md:hidden text-teal-300">
+        ✖
+    </button>
+    <nav class="mt-20">
+        <a href="#" class="block px-4 py-3 hover:bg-gray-800">Dashboard</a>
+        <a href="#" class="block px-4 py-2 hover:bg-gray-800">Projets</a>
+        <a href="#" class="block px-4 py-2 hover:bg-gray-700">Équipe</a>
+        <a href="#" class="block px-4 py-2 hover:bg-gray-700">Alertes</a>
+        <a href="#" class="block px-4 py-2 hover:bg-gray-700">Paramètres</a>
+    </nav>
+</aside>
+
+<!-- Mobile Sidebar Toggle Button -->
+<button id="sidebarToggle" class="fixed bottom-20 right-4 md:hidden bg-gray-700 text-teal-300 p-4 rounded-full">
+    ☰
+</button>
+
+<!-- Main Content -->
+<div class="ml-0 md:ml-64 flex flex-col min-h-screen">
+    <main class="w-full pt-24 px-6 container mx-auto flex-grow mb-6">
+        {{ content }}
+    </main>
+</div>
+
+<script>
+document.getElementById('sidebarToggle').addEventListener('click', function() {
+    const sidebar = document.querySelector('aside');
+    sidebar.classList.toggle('hidden');
+});
+
+document.getElementById('sidebarClose').addEventListener('click', function() {
+    const sidebar = document.querySelector('aside');
+    sidebar.classList.add('hidden');
+});
+</script>
+

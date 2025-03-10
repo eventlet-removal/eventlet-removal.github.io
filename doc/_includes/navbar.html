@@ -1,0 +1,38 @@
+<!-- Header -->
+<header class="py-6 px-10 flex justify-between items-center bg-gradient-to-r from-indigo-900 via-purple-900 to-indigo-900 fixed top-0 w-full z-10 shadow-md">
+    <div class="flex items-center">
+      <a href="{{ site.baseurl }}/" class="flex items-center">
+        <img src="{{ site.baseurl }}/images/logo-60x60.webp" alt="Eventlet Removal Logo" class="h-12 w-12 mr-3">
+        <div class="text-2xl font-bold"><span class="text-teal-300">Eventlet</span><span class="text-yellow-300"> Removal</span></div>
+      </a>
+    </div>
+    <button id="menu-toggle" class="block md:hidden focus:outline-none mr-8">
+        ☰
+    </button>
+    <nav id="menu" class="fixed top-0 left-0 h-full w-64 bg-indigo-900 transform -translate-x-full transition-transform duration-300 md:hidden">
+      <button id="menu-close" class="absolute top-4 right-4 text-teal-300">
+        ✖
+      </button>
+      <a href="{{ site.baseurl }}" class="block p-4 hover:text-cyan-400 transition duration-200">Home</a>
+      <a href="{{ site.baseurl }}{% link getting-started.md %}" class="block p-4 hover:text-cyan-400 transition duration-200">Guide</a>
+      <a href="#about" class="block p-4 hover:text-cyan-400 transition duration-200">About</a>
+      <a href="#contact" class="block p-4 hover:text-cyan-400 transition duration-200">Contact</a>
+    </nav>
+    <nav class="hidden md:flex gap-8">
+      <a href="{{ site.baseurl }}" class="hover:text-cyan-400 transition duration-200">Home</a>
+      <a href="{{ site.baseurl }}{% link getting-started.md %}" class="hover:text-cyan-400 transition duration-200">Guide</a>
+      <a href="#about" class="hover:text-cyan-400 transition duration-200">About</a>
+      <a href="#contact" class="hover:text-cyan-400 transition duration-200">Contact</a>
+    </nav>
+</header>
+<script>
+  document.getElementById('menu-toggle').addEventListener('click', function() {
+    var menu = document.getElementById('menu');
+    menu.classList.toggle('-translate-x-full');
+  });
+
+  document.getElementById('menu-close').addEventListener('click', function() {
+    var menu = document.getElementById('menu');
+    menu.classList.add('-translate-x-full');
+  });
+</script>

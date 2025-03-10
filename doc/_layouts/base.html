@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Futuristic Dev - Explorez l’innovation technologique au-delà des limites actuelles.">
+    <link rel="icon" type="image/png" href="/images/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/images/favicon.svg" />
+    <link rel="shortcut icon" href="/images/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png" />
+    <link rel="manifest" href="/images/site.webmanifest" />
+    <link rel="stylesheet" href="css/style.css">
+    <title>Futuristic Dev</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-white flex flex-col min-h-screen">
+    {% include navbar.html %}
+
+  <main class="flex-grow pt-24 mb-6">
+    {{ content }}
+  </main>
+
+  <!-- Footer -->
+  <footer class="py-6 text-center bg-gray-950 border-t border-gray-800 bg-gradient-to-r from-indigo-900 via-purple-900 to-indigo-900 w-full">
+    <p>&copy; 2025 eventlet.org. All rights reserved.</p>
+  </footer>
+</body>
+</html>
