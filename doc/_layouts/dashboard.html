@@ -2,17 +2,26 @@
 layout: base
 ---
 <!-- Sidebar -->
-<aside class="fixed left-0 h-screen w-64 bg-gray-900 shadow-lg z-20 hidden md:block">
+<aside class="fixed left-0 h-[calc(100vh-6rem)] w-64 bg-gray-900 shadow-lg z-20 hidden md:block mb-24">
     <button id="sidebarClose" class="absolute top-4 right-4 md:hidden text-teal-300">
         ✖
     </button>
     <nav class="mt-20">
-        <a href="#" class="block px-4 py-3 hover:bg-gray-800">Dashboard</a>
-        <a href="#" class="block px-4 py-2 hover:bg-gray-800">Projets</a>
-        <a href="#" class="block px-4 py-2 hover:bg-gray-700">Équipe</a>
-        <a href="#" class="block px-4 py-2 hover:bg-gray-700">Alertes</a>
-        <a href="#" class="block px-4 py-2 hover:bg-gray-700">Paramètres</a>
+        <a href="{{ site.baseurl }}{% link getting-started.md %}" class="block px-4 py-3 hover:bg-gray-700 {% if page.title == 'Getting Started' %}bg-gray-800{% endif %}">Getting Started</a>
+        <a href="{{ site.baseurl }}{% link eventlet.md %}" class="block px-4 py-2 hover:bg-gray-700  {% if page.title == 'Understand Eventlet' %}bg-gray-800{% endif %}">Understand Eventlet</a>
+        <a href="{{ site.baseurl }}{% link alternatives.md %}" class="block px-4 py-2 hover:bg-gray-700  {% if page.title == 'Understand the Alternatives to Eventlet' %}bg-gray-800{% endif %}">Understand the Alternatives</a>
+        <a href="{{ site.baseurl }}{% link preparing.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.title == 'Preparing for Migration' %}bg-gray-800{% endif %}">Preparing for Migration</a>
+        <a href="#" class="block px-4 py-2 hover:bg-gray-700">Migrating to AsyncIO</a>
+        <a href="#" class="block px-4 py-2 hover:bg-gray-700">Migrating to Threading</a>
+        <a href="#" class="block px-4 py-2 hover:bg-gray-700">Managing Common Problems</a>
+        <a href="#" class="block px-4 py-2 hover:bg-gray-700">Case Studies and Testimonials</a>
+        <a href="#" class="block px-4 py-2 hover:bg-gray-700">Additional Resources</a>
+        <a href="#" class="block px-4 py-2 hover:bg-gray-700">Tutorials</a>
+        <a href="#" class="block px-4 py-2 hover:bg-gray-700">FAQs</a>
     </nav>
+    <div class="absolute bottom-4 left-4 text-gray-500 text-sm">
+        Build Date: {{ site.time | date: "%Y-%m-%d" }}
+    </div>
 </aside>
 
 <!-- Mobile Sidebar Toggle Button -->

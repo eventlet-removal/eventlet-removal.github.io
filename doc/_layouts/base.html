@@ -11,7 +11,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png" />
     <link rel="manifest" href="/images/site.webmanifest" />
     <link rel="stylesheet" href="css/style.css">
-    <title>Futuristic Dev</title>
+   <title>{{ page.title}}</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-950 text-white flex flex-col min-h-screen">
@@ -21,9 +21,8 @@
     {{ content }}
   </main>
 
-  <!-- Footer -->
-  <footer class="py-6 text-center bg-gray-950 border-t border-gray-800 bg-gradient-to-r from-indigo-900 via-purple-900 to-indigo-900 w-full">
-    <p>&copy; 2025 eventlet.org. All rights reserved.</p>
-  </footer>
+  {% if page.footer == true %}
+    {% include footer.html %}
+  {% endif %}
 </body>
 </html>
