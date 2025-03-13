@@ -27,9 +27,10 @@ description: >- # this means to ignore newlines until "baseurl:"
   which produce more headaches than solutions.
   If you want your project to keep running it is time to replace it!
 baseurl: "" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
+url: "https://removal.eventlet.org" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: jekyllrb
-github_username:  jekyll
+github_username:  4383
+github_repo: https://github.com/4383/eventlet-removal
 
 # Build settings
 theme: minima
