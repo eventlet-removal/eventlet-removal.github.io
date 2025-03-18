@@ -1,5 +1,7 @@
 ---
 layout: base.html
+title: Migrating to threading
+permalink: /guide/migrating-to-threading/
 ---
 
 ## Practical Guide: Migrating from Eventlet to Threading
@@ -7,7 +9,7 @@ layout: base.html
 This document propose patterns and best practices identified
 to migrate code using **Eventlet** to **threading**.
 
-### 🔄 Replacing Imports
+### Replacing Imports
 
 **Before:**
 ```python

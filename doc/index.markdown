@@ -12,7 +12,7 @@ title: Eventlet Removal - Stop Using Eventlet and Make your Python Software Futu
     <h1 class="text-5xl font-extrabold mb-4">This website learn you<br>How to <span class="text-yellow-500">Remove</span><span class="text-teal-300"> Eventlet</span><br> from your software</h1>
     <p class="mb-6 text-xl">We are not going to turn around pot,<br>Eventlet is a technology from another age,<br>which produce more headaches than solutions.</p>
     <p class="mb-6 text-xl"><strong>If you want your project to keep running then it is time to replace it!</strong></p>
-    <a href="{{ site.baseurl }}{% link getting-started.md %}" class="mt-4 inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">Getting Started</a>
+    <a href="{{ site.baseurl }}{% link guide/getting-started.md %}" class="mt-4 inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">Getting Started</a>
     </div>
 </section>
 
@@ -90,7 +90,7 @@ title: Eventlet Removal - Stop Using Eventlet and Make your Python Software Futu
             </div>
             <div class="bg-indigo-900 p-6 rounded-lg shadow hover:shadow-xl hover:scale-110 transition-transform duration-300">
                 <h3 class="text-2xl font-bold mb-3">Explore Our Resources</h3>
-                <p>Dive into our comprehensive <a href="{{ site.baseurl }}{% link getting-started.md %}" class="text-teal-400">guides</a>, <a href="{{ site.baseurl }}{% link tutorials.md %}" class="text-teal-400">tutorials</a>, and <a href="{{ site.baseurl }}{% link faq.md %}" class="text-teal-400">FAQs</a> to gain a deeper understanding of the migration process. Whether you're just starting or looking to optimize, we have the resources to support you.</p>
+                <p>Dive into our comprehensive <a href="{{ site.baseurl }}{% link guide/getting-started.md %}" class="text-teal-400">guides</a>, <a href="{{ site.baseurl }}{% link guide/tutorials.md %}" class="text-teal-400">tutorials</a>, and <a href="{{ site.baseurl }}{% link guide/faq.md %}" class="text-teal-400">FAQs</a> to gain a deeper understanding of the migration process. Whether you're just starting or looking to optimize, we have the resources to support you.</p>
             </div>
             <div class="bg-indigo-900 p-6 rounded-lg shadow hover:shadow-xl hover:scale-110 transition-transform duration-300">
                 <h3 class="text-2xl font-bold mb-3">Get in Touch</h3>

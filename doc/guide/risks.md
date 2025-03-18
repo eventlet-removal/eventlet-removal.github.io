@@ -4,9 +4,10 @@
 
 layout: dashboard
 title: Eventlet's Risks
+permalink: /guide/eventlet-risks/
 ---
 <section>
-    <h1 class="text-4xl font-bold">Eventlet's Risks</h1>
+    <h1 class="text-4xl font-bold">Risks of Eventlet</h1>
     <p class="mt-10 text-xl">If you are already convinced that you have to migrate off of Eventlet, then you can simply skip this chapter and jump directly to the next one, else, you are at the right place.</p>
 </section>
 <section>

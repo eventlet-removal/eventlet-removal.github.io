@@ -1,0 +1,232 @@
+---
+# Feel free to add content and custom Front Matter to this file.
+# To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
+
+layout: dashboard
+title: Preparing for Migration
+permalink: /guide/preparing-for-migration/
+---
+<section>
+    <h1 class="text-4xl font-bold">Preparing for Migration</h1>
+    <p class="mt-10 text-xl">Before​ starting your migration it is important to take inventory of your use cases with Eventlet and so of your needs. This chapter help you to make this inventory.</p>
+</section>
+
+<!-- locate -->
+<section>
+    <h2 class="mt-10 text-4xl font-bold mb-6">Locate your Eventlet Usages</h2>
+    <p class="mt-10 text-xl">The first thing to do to prepare your migration is to locate all the Eventlet usages in your code base. That's pretty easy to realize by using a shell command. The snippet below should help you to collect 99 percents of your occurences.</p>
+    <pre class="line-numbers"><code class="language-bash">#!/bin/bash
+echo "Searching Eventlet Instances..."
+grep -rnw 'import eventlet' . > eventlet_instances.txt
+grep -rnw 'from eventlet' . >> eventlet_instances.txt
+grep -rnw 'eventlet.spawn' . >> eventlet_instances.txt
+grep -rnw 'eventlet.monkey_patch' . >> eventlet_instances.txt
+echo "Results saved at eventlet_instances.txt"</code></pre>
+</section>
+
+<!-- code audit -->
+<section>
+    <h2 class="text-4xl font-bold mb-6 mt-10">Audit your Code</h2>
+    <p class="text-xl mt-4">In accordance with <a href="{{ site.baseurl }}{% link guide/eventlet.md %}#common-usages" class="text-cyan-400">the common scenario of Eventlet previously identified</a>, the elements below will help you to triagge the occurences previously found. The scenario below will guide you to audit your code and will help you to identify which kind of usage is present in your code base.</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-10 mt-10">
+        <!-- WSGI Server -->
+        <div class="bg-indigo-900 p-6 rounded-lg shadow hover:shadow-xl hover:scale-110 transition-transform duration-300">
+            <h3 class="text-2xl font-bold mb-3">WSGI Server</h3>
+            <p class="mb-2"><strong>Objective:</strong> Serve Python web applications asynchronously.</p>
+            <p class="mb-2"><strong>Usage:</strong> Eventlet is used to create a WSGI server capable of handling a large number of simultaneous connections with low latency.</p>
+            <pre class="line-numbers"><code class="language-python">from eventlet import wsgi, listen
+
+def simple_app(environ, start_response):
+    start_response('200 OK', [('Content-Type', 'text/plain')])
+    return [b'Hello, World!\n']
+
+wsgi.server(listen(('', 8080)), simple_app)</code></pre>
+            <p class="mb-2"><strong>Role:</strong> Efficiently manages incoming HTTP requests without blocking the main thread.</p>
+            <p><a href="https://eventlet.readthedocs.io/en/latest/modules/wsgi.html" class="text-cyan-400 underline">Documentation</a></p>
+        </div>
+        <!-- Asynchronous Network Calls -->
+        <div class="bg-indigo-900 p-6 rounded-lg shadow hover:shadow-xl hover:scale-110 transition-transform duration-300">
+            <h3 class="text-2xl font-bold mb-3">Asynchronous Network Calls</h3>
+            <p class="mb-2"><strong>Objective:</strong> Make network calls without blocking the main execution.</p>
+            <p class="mb-2"><strong>Usage:</strong> Used to make HTTP requests to REST APIs without waiting for the response.</p>
+            <pre class="line-numbers"><code class="language-python">import eventlet
+from eventlet.green import urllib2
+
+def fetch_url(url):
+    return urllib2.urlopen(url).read()
+
+urls = ['http://example.com', 'http://example.org']
+pool = eventlet.GreenPool()
+
+for body in pool.imap(fetch_url, urls):
+    print(body)</code></pre>
+            <p class="mb-2"><strong>Role:</strong> Improves performance by allowing the application to continue running during network calls.</p>
+            <p><a href="https://eventlet.readthedocs.io/en/latest/reference/api/eventlet.green.urllib.html" class="text-cyan-400 underline">Documentation</a></p>
+        </div>
+        <!-- Background Execution of Long Tasks -->
+        <div class="bg-indigo-900 p-6 rounded-lg shadow hover:shadow-xl hover:scale-110 transition-transform duration-300">
+            <h3 class="text-2xl font-bold mb-3">Background Execution of Long Tasks</h3>
+            <p class="mb-2"><strong>Objective:</strong> Execute long tasks in the background.</p>
+            <p class="mb-2"><strong>Usage:</strong> Used for operations like processing large files or performing intensive calculations.</p>
+            <pre class="line-numbers"><code class="language-python">import eventlet
+
+def long_running_task():
+    # Simulate a long-running task
+    eventlet.sleep(10)
+    print("Task completed")
+
+eventlet.spawn(long_running_task)
+print("Main thread continues to run")</code></pre>
+            <p class="mb-2"><strong>Role:</strong> Maintains application responsiveness by executing long tasks without blocking the main thread.</p>
+            <p><a href="https://eventlet.readthedocs.io/en/latest/basic_usage.html#eventlet.spawn" class="text-cyan-400 underline">Documentation</a></p>
+        </div>
+        <!-- Deferred Task Management -->
+        <div class="bg-indigo-900 p-6 rounded-lg shadow hover:shadow-xl hover:scale-110 transition-transform duration-300">
+            <h3 class="text-2xl font-bold mb-3">Deferred Task Management</h3>
+            <p class="mb-2"><strong>Objective:</strong> Manage deferred tasks that can be executed later.</p>
+            <p class="mb-2"><strong>Usage:</strong> Used for complex workflows where some tasks depend on the completion of others.</p>
+            <pre class="line-numbers"><code class="language-python">from eventlet.event import Event
+
+def deferred_task(evt):
+    print("Waiting for event")
+    evt.wait()
+    print("Event occurred, executing task")
+
+evt = Event()
+eventlet.spawn_after(5, deferred_task, evt)
+eventlet.sleep(5)
+evt.send()</code></pre>
+            <p class="mb-2"><strong>Role:</strong> Facilitates the management of task dependencies in complex workflows.</p>
+            <p><a href="https://eventlet.readthedocs.io/en/latest/basic_usage.html#eventlet.spawn_after" class="text-cyan-400 underline">Documentation</a></p>
+        </div>
+        <!-- Green Thread Management -->
+        <div class="bg-indigo-900 p-6 rounded-lg shadow hover:shadow-xl hover:scale-110 transition-transform duration-300">
+            <h3 class="text-2xl font-bold mb-3">Green Thread Management</h3>
+            <p class="mb-2"><strong>Objective:</strong> Manage concurrency with green threads.</p>
+            <p class="mb-2"><strong>Usage:</strong> Used to switch between different tasks without creating new system threads.</p>
+            <pre class="line-numbers"><code class="language-python">import eventlet
+
+def task1():
+    while True:
+        print("Task 1 running")
+        eventlet.sleep(1)
+
+def task2():
+    while True:
+        print("Task 2 running")
+        eventlet.sleep(1)
+
+eventlet.spawn(task1)
+eventlet.spawn(task2)</code></pre>
+            <p class="mb-2"><strong>Role:</strong> Provides efficient resource management by avoiding the creation of many system threads.</p>
+            <p><a href="https://eventlet.readthedocs.io/en/latest/basic_usage.html#greenthread-spawn" class="text-cyan-400 underline">Documentation</a></p>
+        </div>
+        <!-- Socket Compatibility -->
+        <div class="bg-indigo-900 p-6 rounded-lg shadow hover:shadow-xl hover:scale-110 transition-transform duration-300">
+            <h3 class="text-2xl font-bold mb-3">Socket Compatibility</h3>
+            <p class="mb-2"><strong>Objective:</strong> Provide an API compatible with Python's standard sockets.</p>
+            <p class="mb-2"><strong>Usage:</strong> Facilitates the migration of existing applications to an asynchronous model.</p>
+            <pre class="line-numbers"><code class="language-python">import eventlet
+from eventlet.green import socket
+
+def echo_server(port):
+    server = socket.socket()
+    server.bind(('0.0.0.0', port))
+    server.listen(5)
+    while True:
+        client_socket, addr = server.accept()
+        eventlet.spawn(handle_client, client_socket)
+
+def handle_client(client_socket):
+    while True:
+        data = client_socket.recv(1024)
+        if not data:
+            break
+        client_socket.sendall(data)
+    client_socket.close()
+
+echo_server(6000) </code></pre>
+            <p class="mb-2"><strong>Role:</strong> Simplifies the integration of sockets in an asynchronous environment.</p>
+            <p><a href="https://eventlet.readthedocs.io/en/latest/reference/api/eventlet.green.html#module-eventlet.green.socket" class="text-cyan-400 underline">Documentation</a></p>
+        </div>
+        <!-- WebSocket Support -->
+        <div class="bg-indigo-900 p-6 rounded-lg shadow hover:shadow-xl hover:scale-110 transition-transform duration-300">
+            <h3 class="text-2xl font-bold mb-3">WebSocket Support</h3>
+            <p class="mb-2"><strong>Objective:</strong> Manage WebSocket connections for real-time, bidirectional communication.</p>
+            <p class="mb-2"><strong>Usage:</strong> Used for applications requiring real-time updates between the server and the client.</p>
+            <pre class="line-numbers"><code class="language-python">import eventlet
+from eventlet.websocket import WebSocket, websocket
+
+@websocket('/echo')
+def echo(ws):
+    while True:
+        msg = ws.wait()
+        if msg is None:
+            break
+        ws.send(msg)
+
+listener = eventlet.listen(('0.0.0.0', 7000))
+ws = WebSocket(listener)
+eventlet.spawn(ws.accept)</code></pre>
+            <p class="mb-2"><strong>Role:</strong> Enables interactive, real-time communication between the server and clients.</p>
+            <p><a href="https://eventlet.readthedocs.io/en/latest/reference/api/eventlet.html#module-eventlet.websocket" class="text-cyan-400 underline">Documentation</a></p>
+        </div>
+        <!-- Integration with Other Libraries -->
+        <div class="bg-indigo-900 p-6 rounded-lg shadow hover:shadow-xl hover:scale-110 transition-transform duration-300">
+            <h3 class="text-2xl font-bold mb-3">Integration with Other Libraries</h3>
+            <p class="mb-2"><strong>Objective:</strong> Integrate Eventlet with other libraries to provide asynchronous functionality.</p>
+            <p class="mb-2"><strong>Usage:</strong> Used for queue systems or databases.</p>
+            <pre class="line-numbers"><code class="language-python">import eventlet
+from eventlet.green import threading
+import queue
+
+def worker():
+    while True:
+        item = q.get()
+        if item is None:
+            break
+        print(f"Processing {item}")
+        q.task_done()
+
+q = queue.Queue()
+threads = []
+for i in range(3):
+    t = threading.Thread(target=worker)
+    t.start()
+    threads.append(t)
+
+for item in range(10):
+    q.put(item)
+
+q.join()
+
+for i in range(3):
+    q.put(None)
+for t in threads:
+    t.join()</code></pre>
+            <p class="mb-2"><strong>Role:</strong> Integrates asynchronous functionality into systems requiring efficient resource management.</p>
+            <p><a href="https://eventlet.readthedocs.io/en/latest/patching.html#monkeypatching-the-standard-library" class="text-cyan-400 underline">Documentation</a></p>
+        </div>
+    </div>
+</section>
+
+
+<!-- choose an alternative -->
+<section>
+    <h2 class="mt-10 text-4xl font-bold mb-6">Choosing an Alternative</h2>
+    <p class="mt-10 text-xl">This guide made the choice of AsyncIO and Threading as alternatives. We won't cover the other solutions like Curio, Gevent, Tornado, Twisted, however, if you volunteer to document them, then, feel free to propose <a href="{{ site.github_repo }}" class="text-cyan-400">a pull request</a> to update that guide.</p>
+    <p class="mt-4 text-xl">This section aim to help you to determine when using AsyncIO or Threading.</p>
+    <p class="mt-4 text-xl">AsyncIO is great but is explicit nature can force you to rewrite entirely your application. Indeed, when you use AsyncIO, all your stack have to be scattered with the <code class="language-python">await</code> and <code class="language-python">async</code> keywords.</p>
+    <p class="mt-4 text-xl">If your application is just a few lines of code and a couple of sub-modules that cannot be an issue. But, if your implicit async call made with Eventlet are deeply rooted in your call stack then refactoring your application with AsyncIO could become really painful.</p>
+    <p class="mt-4 text-xl">In parallel, AsyncIO is tailored for asynchronous network I/O, making your application more efficient and less resource consuming.<p>
+    <p class="mt-4 text-xl">where Threads can consume resources even if your application do nothing and is waiting for a network I/O.</p>
+</section>
+
+<div class="mt-10 mermaid">
+  graph TD;
+    A[Start] --> B{Condition?};
+    B -- Yes --> C[Do something];
+    B -- No --> D[Do something else];
+    C --> E[End];
+    D --> E;
+</div>
