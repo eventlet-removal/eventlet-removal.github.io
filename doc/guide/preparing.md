@@ -210,6 +210,13 @@ for t in threads:
     </div>
 </section>
 
+<!-- choose an alternative -->
+<section>
+    <h2 class="mt-10 text-4xl font-bold mb-6">Is Eventlet Disablable?</h2>
+    <p class="mt-10 text-xl">Depending on your project kind, time to time, your application may support running with or without Eventlet. As said in the <a href="{{ site.baseurl }}{% link guide/eventlet.md %}">Eventlet section</a> of this guide, Eventlet is often used to make existing code asynchronous, meaning, that your application could potentially run without Eventlet but in a blocking way. That mean that some Eventlet usages can be disabled.</p>
+    <p class="mt-10 text-xl">This type of scenario can ease your migration. You just, if possible, of toggle monkey patching off to switch in synchronous mode. Starting from that point, you would just to transform your calls with the proposed alternatives to make them async again, without having to carre about Eventlet and its side effects in the middle.</p>
+</section>
+
 
 <!-- choose an alternative -->
 <section>
@@ -218,15 +225,35 @@ for t in threads:
     <p class="mt-4 text-xl">This section aim to help you to determine when using AsyncIO or Threading.</p>
     <p class="mt-4 text-xl">AsyncIO is great but is explicit nature can force you to rewrite entirely your application. Indeed, when you use AsyncIO, all your stack have to be scattered with the <code class="language-python">await</code> and <code class="language-python">async</code> keywords.</p>
     <p class="mt-4 text-xl">If your application is just a few lines of code and a couple of sub-modules that cannot be an issue. But, if your implicit async call made with Eventlet are deeply rooted in your call stack then refactoring your application with AsyncIO could become really painful.</p>
-    <p class="mt-4 text-xl">In parallel, AsyncIO is tailored for asynchronous network I/O, making your application more efficient and less resource consuming.<p>
-    <p class="mt-4 text-xl">where Threads can consume resources even if your application do nothing and is waiting for a network I/O.</p>
+    <p class="mt-4 text-xl">In parallel, AsyncIO is tailored for asynchronous network I/O, making your application more efficient and less resource consuming.</p>
+    <p class="mt-4 text-xl">Threads, on their side, can consume resources even if your application do nothing and is waiting for a network I/O. But threads won't force you to rewrite all your application due to a deeply rooted Eventlet async call.</p>
+    <p class="mt-4 text-xl">So what is the solution? If your application is not composed of tons of sub-modules with deeply rooted Eventlet async calls, and, if these calls are mostly used to realize non-blocking network calls, then go straight to AsyncIO, else, prefer Threads.</p>
+    <p class="mt-4 text-xl">Ideally it shouldn't be a all or nothing decision. If you the time and the resources to rewrite your use cases with the right solution, then, that would not be a problem to mix the solutions together. By example, if you are using the WSGI feature from Eventlet to implement an asynchronous server, then, you could consider migrate to the AsyncIO ecosystem and by example choosing to use <a href="https://docs.aiohttp.org/en/stable/" class="text-cyan-400">aiohttp</a> and <a href="https://www.uvicorn.org/" class="text-cyan-400">uvicorn</a> to refactor your WSGI scenario, and, in parallel you could consider to use threading to manage your background tasks that are CPU bound.</p>
+    <p class="mt-4 text-xl">There is one last option that we need to speak about in this section. This option is named <a href="https://awaitlet.sqlalchemy.org/en/latest/" class="text-cyan-400">awaitlet</a>. Awaitlet can allow you to mitigate the depth of your AsyncIO refactor. Awaitlet can be used as a glue between default synchronous code and part of your code that need async mechanisms and AsyncIO. Awaitlet would limit the impact of an AsyncIO refactor, and would allow you a more incremental migration scenario. We will describe <a href="{{ site.baseurl }}{% link guide/depth.md %}" class="text-cyan-400">how to manage the depth</a> of your refactor later in this guide.</p>
+    <p class="mt-4 text-xl">The graph below summarize your decision tree:</p>
+    <div class="mt-10 mermaid">
+        flowchart TD
+            A[Choose between AsyncIO and Threading] --> B{Application composed of<br>many sub-modules?}
+            B -->|Yes| C{Time and resources<br>for implementation?}
+            B -->|No| D[Consider AsyncIO]
+            D --> Z
+            
+            C -->|Yes| D
+            C -->|No| F{Eventlet calls are deeply<br>rooted in your application?}
+            
+            F -->|Yes| H{Need to limit<br>refactoring impact?}
+            F -->|No| D[Consider AsyncIO]
+            
+            H -->|Yes| I{Incremental migration<br>to AsyncIO is something<br>that is possible?}
+            H -->|No| D
+            
+            I --> |Yes| K[Consider using<br>Awaitlet to migrate<br>to AsyncIO incrementally]
+            I --> |No| X[Consider Threading]
+
+            K --> Z
+            X --> Z
+
+            Z[Choice made]
+            </div>
 </section>
 
-<div class="mt-10 mermaid">
-  graph TD;
-    A[Start] --> B{Condition?};
-    B -- Yes --> C[Do something];
-    B -- No --> D[Do something else];
-    C --> E[End];
-    D --> E;
-</div>
