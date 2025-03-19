@@ -221,7 +221,7 @@ for t in threads:
 <!-- choose an alternative -->
 <section>
     <h2 class="mt-10 text-4xl font-bold mb-6">Choosing an Alternative</h2>
-    <p class="mt-10 text-xl">This guide made the choice of AsyncIO and Threading as alternatives. We won't cover the other solutions like Curio, Gevent, Tornado, Twisted, however, if you volunteer to document them, then, feel free to propose <a href="{{ site.github_repo }}" class="text-cyan-400">a pull request</a> to update that guide.</p>
+    <p class="mt-10 text-xl">This guide made the choice of AsyncIO and Threading as alternatives. We won't cover the other solutions like <a href="https://curio.readthedocs.io/en/latest/" class="text-cyan-400" target="_blank">Curio</a>, <a href="http://www.gevent.org/" class="text-cyan-400" target="_blank">Gevent</a>, <a href="https://www.tornadoweb.org/en/stable/" class="text-cyan-400" target="_blank">Tornado</a>, <a href="https://twisted.org/" class="text-cyan-400" target="_blank">Twisted</a>, however, if you volunteer to document them, then, feel free to propose <a href="{{ site.github_repo }}" class="text-cyan-400">a pull request</a> to update that guide.</p>
     <p class="mt-4 text-xl">This section aim to help you to determine when using AsyncIO or Threading.</p>
     <p class="mt-4 text-xl">AsyncIO is great but is explicit nature can force you to rewrite entirely your application. Indeed, when you use AsyncIO, all your stack have to be scattered with the <code class="language-python">await</code> and <code class="language-python">async</code> keywords.</p>
     <p class="mt-4 text-xl">If your application is just a few lines of code and a couple of sub-modules that cannot be an issue. But, if your implicit async call made with Eventlet are deeply rooted in your call stack then refactoring your application with AsyncIO could become really painful.</p>
@@ -230,10 +230,10 @@ for t in threads:
     <p class="mt-4 text-xl">So what is the solution? If your application is not composed of tons of sub-modules with deeply rooted Eventlet async calls, and, if these calls are mostly used to realize non-blocking network calls, then go straight to AsyncIO, else, prefer Threads.</p>
     <p class="mt-4 text-xl">Ideally it shouldn't be a all or nothing decision. If you the time and the resources to rewrite your use cases with the right solution, then, that would not be a problem to mix the solutions together. By example, if you are using the WSGI feature from Eventlet to implement an asynchronous server, then, you could consider migrate to the AsyncIO ecosystem and by example choosing to use <a href="https://docs.aiohttp.org/en/stable/" class="text-cyan-400">aiohttp</a> and <a href="https://www.uvicorn.org/" class="text-cyan-400">uvicorn</a> to refactor your WSGI scenario, and, in parallel you could consider to use threading to manage your background tasks that are CPU bound.</p>
     <p class="mt-4 text-xl">There is one last option that we need to speak about in this section. This option is named <a href="https://awaitlet.sqlalchemy.org/en/latest/" class="text-cyan-400">awaitlet</a>. Awaitlet can allow you to mitigate the depth of your AsyncIO refactor. Awaitlet can be used as a glue between default synchronous code and part of your code that need async mechanisms and AsyncIO. Awaitlet would limit the impact of an AsyncIO refactor, and would allow you a more incremental migration scenario. We will describe <a href="{{ site.baseurl }}{% link guide/depth.md %}" class="text-cyan-400">how to manage the depth</a> of your refactor later in this guide.</p>
-    <p class="mt-4 text-xl">The graph below summarize your decision tree:</p>
+    <p class="mt-4 text-xl">The graph below summarize your decision tree based on the solutions retained in this guide:</p>
     <div class="mt-10 mermaid">
         flowchart TD
-            A[Choose between AsyncIO and Threading] --> B{Application composed of<br>many sub-modules?}
+            A[Choosing between available alternatives] --> B{Application composed of<br>many sub-modules?}
             B -->|Yes| C{Time and resources<br>for implementation?}
             B -->|No| D[Consider AsyncIO]
             D --> Z
@@ -254,6 +254,25 @@ for t in threads:
             X --> Z
 
             Z[Choice made]
-            </div>
+    </div>
 </section>
 
+<section>
+    <h2 class="mt-10 text-4xl font-bold mb-6">Split your Works</h2>
+    <h3 class="mt-10 text-3xl font-bold mb-6">Services First</h3>
+    <p class="mt-4 text-xl">Time to time your application can be composed of one or many services and of one or many libraries. All these deliverables represent your application.</p>
+    <p class="mt-4 text-xl">The majority of the time that's your services that monkey patch your environment, meaning that the occurences of Eventlet in your libraries is often just the result of a monkey patching at an higher level in your stack. If you migrate your libraries first you will surely broke something in your service or you will surely face unexpected side effects.</p>
+    <p  class="mt-4 text-xl">The right way to migrate this kind of scenario is to first completelly migrate your services, and once done, to drop the Eventlet occurences in your libraries.As we explained <a href=" {{ site.baseurl }}{% link guide/eventlet.md %}#promises" class="text-cyan-400">ealier in this guide the magic of Eventlet do not keep</a> its promises and surely had side effects on all your stack. It is not rare to see libraries fixed with patches just to run with Eventlet (to avoid race conditions or side effects of monkey patching).</p>
+    <p  class="mt-4 text-xl text-yellow-300">Migrate your services first, and, then, tackle your libraries.</p>
+    <h3 class="mt-10 text-3xl font-bold mb-6">Isolate your Application into Functional Parts</h3>
+    <p class="mt-4 text-xl">Sometimes a single codebase hosts different services or different parts of a service, endpoints, and entrypoints, which are not necessarly executed together in the same process. Identifying these functional parts can help you plan your migration in isolated, functionally autonomous sub-parts that are therefore easier to migrate.</p>
+    <p class="mt-4 text-xl">Identifying these parts will allow you to incrementally migrating your deliverables without impacting everything in your app at the same time. It will give you more control and will allow you a more fine grained migration.</p>
+    <p  class="mt-4 text-xl text-yellow-300">Divide and conquer.</p>
+    <h3 class="mt-10 text-3xl font-bold mb-6">Deprecate First</h3>
+    <p class="mt-4 text-xl">If your deliverables rely on Eventlet, there is chances that it also own parameters or config options related to Eventlet. We have to care about our end users and we have to avoid abrupt removal of these things. Removing them without advising firt could abruply broke their configurations or their environments, for this reason, we have to respect a deprecation period first.</p>
+    <p class="mt-4 text-xl">This deprecation period will make your end users less nervous and frustrated. This deprecation period will show that you care about about your end users.</p>
+    <p  class="mt-4 text-xl text-yellow-300">Explicit is better than implicit.</p>
+    <h3 class="mt-10 text-3xl font-bold mb-6">Secondly Executors</h3>
+    <p class="mt-4 text-xl">In general Greenthread are easy to identify and so easy to flush out. Adressing them first will drastically reduce the scope of Eventlet in your application, leaving you more brain resources to handle the complexe scenarios introduced by monkey patching and implicit async.</p>
+    <p  class="mt-4 text-xl text-yellow-300">Migrate greenthread first, and, then, tackle wild monkey patching.</p>
+</section>

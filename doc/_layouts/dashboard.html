@@ -12,7 +12,7 @@ layout: base
         <a href="{{ site.baseurl }}{% link guide/eventlet.md %}" class="block px-4 py-2 hover:bg-gray-700  {% if page.title == 'Understand Eventlet' %}bg-gray-800{% endif %}">Understanding Eventlet</a>
         <a href="{{ site.baseurl }}{% link guide/alternatives.md %}" class="block px-4 py-2 hover:bg-gray-700  {% if page.title == 'Understand the Alternatives to Eventlet' %}bg-gray-800{% endif %}">Understanding the Alternatives</a>
         <a href="{{ site.baseurl }}{% link guide/preparing.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.title == 'Preparing for Migration' %}bg-gray-800{% endif %}">Preparing for Migration</a>
-        <a href="#" class="block px-4 py-2 hover:bg-gray-700">Sequencing the Migration</a>
+        <a href="{{ site.baseurl }}{% link guide/sequencing.md %}" class="block px-4 py-2 hover:bg-gray-700{% if page.id == 'sequencing' %}bg-gray-800{% endif %}">Sequencing the Migration</a>
         <a href="#" class="block px-4 py-2 hover:bg-gray-700">Migrating to AsyncIO</a>
         <a href="{{ site.baseurl }}{% link guide/threading.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.title == 'Migrating to threading' %}bg-gray-800{% endif %}">Migrating to Threading</a>
         <a href="#" class="block px-4 py-2 hover:bg-gray-700">Managing Depth - Awaitlet</a>
