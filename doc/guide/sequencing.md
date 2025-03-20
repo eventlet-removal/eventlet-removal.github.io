@@ -6,7 +6,7 @@ id: sequencing
 ---
 <section>
     <h1 class="text-4xl font-bold mb-6">Sequencing the Migration</h1>
-    <p class="mt-10 text-xl">This chapter aim to give you an overview of the various timeline of the migration. From your point of view. From the life cycle of Eventlet point of view and its integration with versions of CPython. And to finish from the point of view of the migration of OpenStack.</p>
+    <p class="mt-10 text-xl">This chapter aims to give you an overview of the various timeline of the migration. From your point of view. From the life cycle of Eventlet point of view and its integration with versions of CPython. And to finish from the point of view of the migration of OpenStack.</p>
     <h2 class="mt-10 text-3xl font-bold mb-6">Your Migration</h2>
     <p class="mt-10 text-xl">The Gantt diagram below aim to give you an overview of how the removal of Eventlet from your deliverable could looks if started at 2025 March 19th.</p>
     <div class="mt-10 mermaid">
