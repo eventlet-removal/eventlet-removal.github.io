@@ -13,7 +13,7 @@ permalink: /guide/preparing-for-migration/
 
 <!-- locate -->
 <section>
-    <h2 class="mt-10 text-4xl font-bold mb-6">Locate your Eventlet Usages</h2>
+    <h2 id="locate-eventlet-usages" class="mt-10 text-4xl font-bold mb-6">Locate your Eventlet Usages <a href="#locate-eventlet-usages" class="text-cyan-400 text-xl">🔗</a></h2>
     <p class="mt-10 text-xl">The first thing to do to prepare your migration is to locate all the Eventlet usages in your code base. That's pretty easy to realize by using a shell command. The snippet below should help you to collect 99 percents of your occurences.</p>
     <pre class="line-numbers"><code class="language-bash">#!/bin/bash
 echo "Searching Eventlet Instances..."
@@ -26,7 +26,7 @@ echo "Results saved at eventlet_instances.txt"</code></pre>
 
 <!-- code audit -->
 <section>
-    <h2 class="text-4xl font-bold mb-6 mt-10">Audit your Code</h2>
+    <h2 id="audit-your-code" class="text-4xl font-bold mb-6 mt-10">Audit your Code <a href="#audit-your-code" class="text-cyan-400 text-xl">🔗</a></h2>
     <p class="text-xl mt-4">In accordance with <a href="{{ site.baseurl }}{% link guide/eventlet.md %}#common-usages" class="text-cyan-400">the common scenario of Eventlet previously identified</a>, the elements below will help you to triagge the occurences previously found. The scenario below will guide you to audit your code and will help you to identify which kind of usage is present in your code base.</p>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-10 mt-10">
         <!-- WSGI Server -->
@@ -212,7 +212,7 @@ for t in threads:
 
 <!-- choose an alternative -->
 <section>
-    <h2 class="mt-10 text-4xl font-bold mb-6">Is Eventlet Disablable?</h2>
+    <h2 id="is-eventlet-disablable" class="mt-10 text-4xl font-bold mb-6">Is Eventlet Disablable? <a href="#is-eventlet-disablable" class="text-cyan-400 text-xl">🔗</a></h2>
     <p class="mt-10 text-xl">Depending on your project kind, time to time, your application may support running with or without Eventlet. As said in the <a href="{{ site.baseurl }}{% link guide/eventlet.md %}">Eventlet section</a> of this guide, Eventlet is often used to make existing code asynchronous, meaning, that your application could potentially run without Eventlet but in a blocking way. That mean that some Eventlet usages can be disabled.</p>
     <p class="mt-10 text-xl">This type of scenario can ease your migration. You just, if possible, of toggle monkey patching off to switch in synchronous mode. Starting from that point, you would just to transform your calls with the proposed alternatives to make them async again, without having to carre about Eventlet and its side effects in the middle.</p>
 </section>
@@ -220,7 +220,7 @@ for t in threads:
 
 <!-- choose an alternative -->
 <section>
-    <h2 class="mt-10 text-4xl font-bold mb-6">Choosing an Alternative</h2>
+    <h2 id="choosing-an-alternative" class="mt-10 text-4xl font-bold mb-6">Choosing an Alternative <a href="#choosing-an-alternative" class="text-cyan-400 text-xl">🔗</a></h2>
     <p class="mt-10 text-xl">This guide made the choice of AsyncIO and Threading as alternatives. We won't cover the other solutions like <a href="https://curio.readthedocs.io/en/latest/" class="text-cyan-400" target="_blank">Curio</a>, <a href="http://www.gevent.org/" class="text-cyan-400" target="_blank">Gevent</a>, <a href="https://www.tornadoweb.org/en/stable/" class="text-cyan-400" target="_blank">Tornado</a>, <a href="https://twisted.org/" class="text-cyan-400" target="_blank">Twisted</a>, however, if you volunteer to document them, then, feel free to propose <a href="{{ site.github_repo }}" class="text-cyan-400">a pull request</a> to update that guide.</p>
     <p class="mt-4 text-xl">This section aim to help you to determine when using AsyncIO or Threading.</p>
     <p class="mt-4 text-xl">AsyncIO is great but is explicit nature can force you to rewrite entirely your application. Indeed, when you use AsyncIO, all your stack have to be scattered with the <code class="language-python">await</code> and <code class="language-python">async</code> keywords.</p>
@@ -258,7 +258,7 @@ for t in threads:
 </section>
 
 <section>
-    <h2 class="mt-10 text-4xl font-bold mb-6">Split your Works</h2>
+    <h2 id="split-your-works" class="mt-10 text-4xl font-bold mb-6">Split your Works <a href="#split-your-works" class="text-cyan-400 text-xl">🔗</a></h2>
     <h3 class="mt-10 text-3xl font-bold mb-6">Services First</h3>
     <p class="mt-4 text-xl">Time to time your application can be composed of one or many services and of one or many libraries. All these deliverables represent your application.</p>
     <p class="mt-4 text-xl">The majority of the time that's your services that monkey patch your environment, meaning that the occurences of Eventlet in your libraries is often just the result of a monkey patching at an higher level in your stack. If you migrate your libraries first you will surely broke something in your service or you will surely face unexpected side effects.</p>
