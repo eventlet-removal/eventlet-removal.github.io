@@ -5,6 +5,7 @@
 layout: base
 footer: true
 title: Eventlet Removal - Stop Using Eventlet and Make your Python Software Future-Proofing
+permalink: /
 ---
 <!-- Hero Section -->
 <section class="h-screen flex items-center justify-center bg-cover bg-center" style="background-image: url('images/hero.jpg'); background-position: center 40%; background-repeat: no-repeat; background-size: cover;">

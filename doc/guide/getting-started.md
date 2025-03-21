@@ -38,17 +38,19 @@ permalink: /guide/getting-started/
     </div>
 </section>
 
-<section>
-    <h2 class="mt-10 text-3xl font-bold">Objectives of This Guide</h2>
-    <p class="mt-10 text-xl">The OpenStack community <a href="https://review.opendev.org/c/openstack/governance/+/902585" target="_blank" class="text-cyan-400" >began to pave the way for a structured migration</a> and <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22" target="_blank" class="text-cyan-400">pionneered bulk migration</a>. The OpenStack community is now eager to share his experience with other. This guide is the result of the work done by the OpenStack community. The intent of this guide is to help other Eventlet users in their migration journey.</p>
-    <p class="mt-10 text-xl">The primary goal of this guide is to provide a structured and informative pathway for migrating from Eventlet. By the end of this guide, you will:</p>
-    <ul class="mt-10 text-xl">
-        <li class="mt-5 text-xl"><i class="fas fa-check-square text-teal-300 mr-2"></i>Understand the key differences between Eventlet and its alternatives.</li>
-        <li class="mt-5 text-xl"><i class="fas fa-check-square text-teal-300 mr-2"></i>Learn how to assess your current Eventlet-based applications for migration readiness.</li>
-        <li class="mt-5 text-xl"><i class="fas fa-check-square text-teal-300 mr-2"></i>Follow step-by-step instructions for migrating to AsyncIO or Threading.</li>
-        <li class="mt-5 text-xl"><i class="fas fa-check-square text-teal-300 mr-2"></i>Access resources, including code examples and best practices, to support your migration efforts.</li>
-        <li class="mt-5 text-xl"><i class="fas fa-check-square text-teal-300 mr-2"></i>Hear from others who have successfully navigated this transition, gaining insights from their experiences.</li>
-    </ul>
+<section class="mt-10 futuristic-section p-8 rounded-lg">
+    <div class="bg-gray-900 bg-opacity-70 p-6 rounded-lg">
+        <h2 class="text-3xl font-bold mb-6">Objectives of This Guide</h2>
+        <p class="text-xl mb-4">The OpenStack community <a href="https://review.opendev.org/c/openstack/governance/+/902585" target="_blank" class="text-cyan-400">began to pave the way for a structured migration</a> and <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22" target="_blank" class="text-cyan-400">pionneered bulk migration</a>. The OpenStack community is now eager to share his experience with other. This guide is the result of the work done by the OpenStack community. The intent of this guide is to help other Eventlet users in their migration journey.</p>
+        <p class="text-xl mb-4">The primary goal of this guide is to provide a structured and informative pathway for migrating from Eventlet. By the end of this guide, you will:</p>
+        <ul class="mb-6 text-xl">
+            <li class="mt-3"><i class="fas fa-check-square text-teal-300 mr-2"></i>Understand the key differences between Eventlet and its alternatives.</li>
+            <li class="mt-3"><i class="fas fa-check-square text-teal-300 mr-2"></i>Learn how to assess your current Eventlet-based applications for migration readiness.</li>
+            <li class="mt-3"><i class="fas fa-check-square text-teal-300 mr-2"></i>Follow step-by-step instructions for migrating to AsyncIO or Threading.</li>
+            <li class="mt-3"><i class="fas fa-check-square text-teal-300 mr-2"></i>Access resources, including code examples and best practices, to support your migration efforts.</li>
+            <li class="mt-3"><i class="fas fa-check-square text-teal-300 mr-2"></i>Hear from others who have successfully navigated this transition, gaining insights from their experiences.</li>
+        </ul>
+    </div>
 </section>
 
 <section>
