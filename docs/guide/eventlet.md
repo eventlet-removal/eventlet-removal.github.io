@@ -5,6 +5,11 @@
 layout: dashboard
 title: Understanding Eventlet
 permalink: /guide/understanding-eventlet/
+description: Understand what Eventlet is, its common usage patterns, and why its architecture based on green threads and monkey patching introduces challenges for modern Python applications.
+keywords: eventlet architecture, green threads, monkey patching, cooperative multitasking, python concurrency, eventlet problems, eventlet patterns
+og_type: article
+og_title: Understanding Eventlet - Architecture, Patterns, and Challenges
+og_description: A deep dive into how Eventlet works, its common usage patterns, and the inherent challenges that make migration to modern alternatives necessary.
 ---
 
 <section>

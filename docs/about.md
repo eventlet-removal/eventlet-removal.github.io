@@ -2,6 +2,11 @@
 layout: base
 title: About Us
 permalink: /about/
+description: Learn about the creators of the Eventlet Removal guide, their background in the Python ecosystem, and the collective effort behind this initiative to help developers transition away from Eventlet.
+keywords: eventlet removal, python ecosystem, migration guide, asynchronous programming, eventlet alternatives, openstack community
+og_type: website
+og_title: About the Eventlet Removal Guide Team and Project
+og_description: Meet the team behind the Eventlet Removal guide and learn about our mission to help Python developers migrate to better asynchronous solutions.
 ---
 
 <div class="container mx-auto px-6 py-10">

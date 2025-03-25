@@ -3,6 +3,11 @@ layout: dashboard
 title: Sequencing the Migration
 permalink: /guide/sequencing-the-migration/
 id: sequencing
+description: Learn how to properly sequence your Eventlet migration project with timelines and Gantt charts. This guide covers planning your transition, aligning with Eventlet's retirement timeline, and the OpenStack community's migration approach.
+keywords: eventlet migration timeline, migration planning, project sequencing, gantt chart, openstack migration, eventlet retirement, phased migration
+og_type: article
+og_title: Sequencing Your Eventlet Migration Project - Timeline Planning Guide
+og_description: Create an effective timeline for your Eventlet migration project with Gantt charts and practical milestone planning based on the OpenStack community's approach.
 ---
 <section>
     <h1 class="text-4xl font-bold mb-6">Sequencing the Migration</h1>

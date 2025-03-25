@@ -3,6 +3,11 @@ layout: dashboard
 title: Migrating to AsyncIO
 permalink: /guide/migrating-to-asyncio/
 id: asyncio
+description: A comprehensive guide on how to migrate your Python application from Eventlet to AsyncIO. Learn about code refactoring patterns, the Sync-Async Adapter Pattern, and common pitfalls to avoid during migration.
+keywords: asyncio migration, eventlet to asyncio, async await, python asynchronous programming, sync-async adapter, refactoring eventlet
+og_type: article
+og_title: Complete Guide for Migrating from Eventlet to AsyncIO
+og_description: Detailed step-by-step instructions for refactoring Eventlet code to use modern AsyncIO patterns with practical examples and best practices.
 ---
 <section>
     <h1 class="text-4xl font-bold mb-6">Migrating to AsyncIO</h1>

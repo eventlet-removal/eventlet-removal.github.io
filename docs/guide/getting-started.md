@@ -5,6 +5,11 @@
 layout: dashboard
 title: Getting Started
 permalink: /guide/getting-started/
+description: Begin your journey to remove Eventlet from your Python projects. This introductory guide explains why migration is necessary, the benefits you'll gain, and provides an overview of the transition process.
+keywords: eventlet migration, getting started, python concurrency, eventlet alternatives, migration benefits, future-proofing code
+og_type: article
+og_title: Getting Started with Eventlet Removal - First Steps for Your Migration
+og_description: Learn why migrating from Eventlet is essential and what benefits you'll gain by transitioning to modern Python concurrency libraries.
 ---
 <section>
     <h1 class="text-4xl font-bold">Getting Started</h1>

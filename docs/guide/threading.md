@@ -2,6 +2,11 @@
 layout: base.html
 title: Migrating to threading
 permalink: /guide/migrating-to-threading/
+description: A practical guide for migrating from Eventlet to Python's native threading module. Learn code patterns, best practices, and specific techniques for replacing green threads with standard threads in your applications.
+keywords: eventlet to threading, thread migration, green threads, python threading module, native threads, thread executors, thread pools
+og_type: article
+og_title: Migrating from Eventlet to Python's Native Threading Module
+og_description: Comprehensive code patterns and best practices for replacing Eventlet's green threads with Python's standard threading in your applications.
 ---
 
 ## Practical Guide: Migrating from Eventlet to Threading

@@ -5,6 +5,11 @@
 layout: dashboard
 title: Understand the Alternatives to Eventlet
 permalink: /guide/alternatives/
+description: Explore modern alternatives to Eventlet such as AsyncIO and native threads. This guide explains the advantages of each approach and helps you choose the right replacement for your Python applications.
+keywords: eventlet alternatives, asyncio vs eventlet, python threading, native threads, green threads, cooperative multitasking, python concurrency
+og_type: article
+og_title: Understanding Alternatives to Eventlet - AsyncIO and Threading
+og_description: Compare AsyncIO and native threading as modern alternatives to Eventlet for Python application concurrency with detailed advantages of each approach.
 ---
 <section>
     <h1 class="text-4xl font-bold">Understanding the Alternatives</h1>

@@ -5,6 +5,11 @@
 layout: dashboard
 title: Preparing for Migration
 permalink: /guide/preparing-for-migration/
+description: Learn how to prepare your codebase for migration away from Eventlet. This guide covers auditing your code, identifying Eventlet usage patterns, and creating a strategic migration plan for your specific application.
+keywords: eventlet code audit, migration planning, identifying eventlet usage, eventlet patterns, code analysis, migration strategy, code preparation
+og_type: article
+og_title: Preparing Your Codebase for Eventlet Migration - Comprehensive Planning Guide
+og_description: Step-by-step instructions for auditing your codebase, identifying Eventlet usage patterns, and creating a tailored migration strategy.
 ---
 <section>
     <h1 class="text-4xl font-bold">Preparing for Migration</h1>
