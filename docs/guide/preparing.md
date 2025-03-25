@@ -230,7 +230,7 @@ for t in threads:
     </div>
 </section>
 
-<!-- choose an alternative -->
+<!-- is eventlet disablable -->
 <section>
     <h2 id="is-eventlet-disablable" class="mt-10 text-3xl font-bold mb-6">Is Eventlet Disablable? <a href="#is-eventlet-disablable" class="text-cyan-400 text-xl">🔗</a></h2>
     <p class="mt-10 text-xl">Depending on your project kind, time to time, your application may support running with or without Eventlet. As said in the <a href="{{ site.baseurl }}{% link guide/eventlet.md %}">Eventlet section</a> of this guide, Eventlet is often used to make existing code asynchronous, meaning, that your application could potentially run without Eventlet but in a blocking way. That mean that some Eventlet usages can be disabled.</p>
@@ -278,6 +278,7 @@ for t in threads:
     </div>
 </section>
 
+<!-- split your work -->
 <section>
     <h2 id="split-your-works" class="mt-10 text-3xl font-bold mb-6">Split your Works <a href="#split-your-works" class="text-cyan-400 text-xl">🔗</a></h2>
     <h3 class="mt-10 text-2xl font-bold mb-6">Services First</h3>
@@ -297,8 +298,10 @@ for t in threads:
     <h3 class="mt-10 text-2xl font-bold mb-6">Secondly Executors</h3>
     <p class="mt-4 text-xl">In general Greenthread are easy to identify and so easy to flush out. Adressing them first will drastically reduce the scope of Eventlet in your application, leaving you more brain resources to handle the complexe scenarios introduced by monkey patching and implicit async.</p>
     <p  class="mt-4 text-xl text-yellow-300">Migrate greenthread first, and, then, tackle wild monkey patching.</p>
+    <p class="mt-4 text-xl">To conclude this section, this incremental approach is particularly suited for applications using internal private APIs, as it allows you to progressively migrate these APIs without disrupting other parts of the system.</p>
 </section>
 
+<!-- Migrating applications with internal private APIs-->
 <section>
     <h2 id="migrating-shared-private-apis" class="mt-10 text-3xl font-bold mb-6">
         Migrating Applications with Internal Private APIs
