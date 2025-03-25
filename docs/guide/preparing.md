@@ -25,6 +25,7 @@ og_description: Step-by-step instructions for auditing your codebase, identifyin
                 <li><a href="#choosing-an-alternative" class="text-cyan-400 hover:underline">Choosing an Alternative</a></li>
                 <li><a href="#split-your-works" class="text-cyan-400 hover:underline">Split your Works</a></li>
                 <li><a href="#migrating-applications-with-internal-private-apis" class="text-cyan-400 hover:underline">Migrating Applications with Internal Private APIs</a></li>
+                <li><a href="#implementation-example" class="text-cyan-400 hover:underline">Implementation Example of Migrating Applications with Internal Private APIs</a></li>
             </ul>
         </div>
     </div>
@@ -374,5 +375,264 @@ def fetch_data():
 
     <p class="mt-4 text-xl text-yellow-300">
         Decouple, abstract, and incrementally migrate to minimize risk and maximize control.
+    </p>
+</section>
+
+<section>
+    <h2 id="implementation-example" class="mt-10 text-3xl font-bold mb-6">Implementation Example of Migrating Applications with Internal Private APIs <a href="#implementation-example" class="text-cyan-400 text-xl">🔗</a></h2>
+
+    <h3 class="mt-10 text-2xl font-bold mb-6">1. Context and Objectives</h3>
+    <p class="mt-4 text-xl">
+        Your application is built on a single codebase with several entry points that run dedicated business processes (for example, API Server, Compute Server, and XYZ Server). Up to now, these processes rely on Eventlet for concurrency management (e.g., green threads, monkey-patching, etc.). However, as your requirements evolve and for reasons such as performance, maintainability, or integration with other Python libraries, you have decided to migrate away from Eventlet to an alternative concurrency solution—whether that be asyncio, threading, or a combination of both.
+    </p>
+
+    <p class="mt-4 text-xl"><strong>Objectives:</strong></p>
+    <ul class="list-disc pl-8 mt-4 text-xl space-y-2">
+        <li><strong>Decouple from Eventlet:</strong> Replace the Eventlet-dependent concurrency model with a more modern or suitable alternative.</li>
+        <li><strong>Ensure a smooth transition:</strong> Migrate the business processes incrementally to minimize risks and maintain service continuity.</li>
+        <li><strong>Maintain functionality:</strong> Guarantee that during and after the migration, the application’s business processes continue to interact with core services (database connections, RPC communications, etc.) correctly.</li>
+    </ul>
+
+    <hr class="my-10">
+
+    <h3 class="mt-10 text-2xl font-bold mb-6">2. Step 1: Initial State (Before Migration)</h3>
+
+    <h4 class="mt-6 text-xl font-bold mb-4">Description</h4>
+    <p class="mt-4 text-xl">
+        At this stage, all business processes (API Server, Compute Server, XYZ Server) are tightly coupled with Eventlet for concurrency. The Eventlet layer underpins how these processes manage asynchronous tasks, network I/O, and cooperative multitasking.
+    </p>
+
+    <h4 class="mt-6 text-xl font-bold mb-4">Diagram</h4>
+    <div class="mt-10 mermaid">
+        %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#312e81', 'primaryTextColor': '#fff', 'primaryBorderColor': '#433e99', 'lineColor': '#ffffff', 'secondaryColor': '#312e81', 'tertiaryColor': '#312e81' }}}%%
+        flowchart TD
+        %% Business Processes
+        subgraph Business_Processes [Business Processes]
+            A[API Server]
+            B[Compute Server]
+            C[XYZ Server]
+        end
+
+        %% Legacy Concurrency Model (Eventlet)
+        subgraph Legacy [Eventlet Concurrency - Legacy]
+            D[Database Connection]
+            E[RPC Communications]
+            F[Security Management]
+        end
+
+        %% Direct Connections using Eventlet
+        A --> D
+        A --> E
+        A --> F
+
+        B --> D
+        B --> E
+        B --> F
+
+        C --> D
+        C --> E
+        C --> F
+    </div>
+
+    <h4 class="mt-6 text-xl font-bold mb-4">Explanation</h4>
+    <p class="mt-4 text-xl">
+        <strong>Vertical Silos:</strong> Represent the different business processes (API Server, Compute Server, XYZ Server) that execute concurrently.
+    </p>
+    <p class="mt-4 text-xl">
+        <strong>Horizontal Silo:</strong> The Eventlet-based concurrency layer (Legacy) handles core functionalities like database connections, RPC, and security.
+    </p>
+    <p class="mt-4 text-xl">
+        <strong>Tight Coupling:</strong> Every process directly depends on Eventlet, which makes it difficult to evolve or integrate with alternative concurrency frameworks.
+    </p>
+
+    <hr class="my-10">
+
+    <h3 class="mt-10 text-2xl font-bold mb-6">3. Step 2: Progressive Migration (During Migration with One Process Migrated)</h3>
+
+    <h4 class="mt-6 text-xl font-bold mb-4">Description</h4>
+    <p class="mt-4 text-xl">
+        In this phase, you begin the migration by refactoring one of the business processes (e.g., the API Server) to use a newly developed concurrency adapter. This adapter abstracts the underlying concurrency mechanism and redirects calls to the chosen alternative (asyncio, threading, or a hybrid approach). Meanwhile, the remaining processes continue to use Eventlet.
+    </p>
+
+    <h4 class="mt-6 text-xl font-bold mb-4">Diagram</h4>
+    <div class="mt-10 mermaid">
+        %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#312e81', 'primaryTextColor': '#fff', 'primaryBorderColor': '#433e99', 'lineColor': '#ffffff', 'secondaryColor': '#312e81', 'tertiaryColor': '#312e81' }}}%%
+        flowchart TD
+        %% Business Processes
+        subgraph Business_Processes [Business Processes]
+            A[API Server - Migrated]
+            B[Compute Server]
+            C[XYZ Server]
+        end
+
+        %% Legacy Concurrency Model for non-migrated processes
+        subgraph Legacy [Eventlet Concurrency - Legacy]
+            D[Database Connection - Legacy]
+            E[RPC Communications - Legacy]
+            F[Security Management - Legacy]
+        end
+
+        %% Migrated Concurrency Model accessible via the adapter
+        subgraph Migrated [New Concurrency - Migrated]
+            G[Database Connection - Migrated]
+            H[RPC Communications - Migrated]
+            I[Security Management - Migrated]
+        end
+
+        %% Concurrency Adapter for Migration
+        subgraph Adapter [Concurrency Adapter]
+            J[Migration Interface]
+        end
+
+        %% The migrated process uses the adapter that points to the new concurrency model
+        A ---|Uses Adapter| J
+        J --> G
+        J --> H
+        J --> I
+
+        %% Other processes still use the legacy Eventlet layer
+        B --> D
+        B --> E
+        B --> F
+
+        C --> D
+        C --> E
+        C --> F
+    </div>
+
+    <h4 class="mt-6 text-xl font-bold mb-4">Explanation</h4>
+    <p class="mt-4 text-xl">
+        <strong>Partial Migration:</strong> Only the API Server has been refactored to use the concurrency adapter. This adapter bridges the existing functionality with the new concurrency mechanism.
+    </p>
+    <p class="mt-4 text-xl">
+        <strong>Adapter Role:</strong> The adapter abstracts away the differences between Eventlet and the new concurrency approach, allowing the migrated process to operate with the new model without affecting the others.
+    </p>
+    <p class="mt-4 text-xl">
+        <strong>Coexistence:</strong> The legacy (Eventlet) and the migrated concurrency models run in parallel, ensuring uninterrupted service for non-migrated processes.
+    </p>
+
+    <hr class="my-10">
+
+    <h3 class="mt-10 text-2xl font-bold mb-6">4. Step 3: Complete Migration (After Migration, All Processes Migrated)</h3>
+
+    <h4 class="mt-6 text-xl font-bold mb-4">Description</h4>
+    <p class="mt-4 text-xl">
+        After thorough testing and validation, all business processes are refactored to use the concurrency adapter, which now directs them to the new concurrency model (whether that's asyncio, threading, or a combination thereof). This marks the end of dependency on Eventlet.
+    </p>
+
+    <h4 class="mt-6 text-xl font-bold mb-4">Diagram</h4>
+    <div class="mt-10 mermaid">
+        %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#312e81', 'primaryTextColor': '#fff', 'primaryBorderColor': '#433e99', 'lineColor': '#ffffff', 'secondaryColor': '#312e81', 'tertiaryColor': '#312e81' }}}%%
+        flowchart TD
+        %% Business Processes
+        subgraph Business_Processes [Business Processes]
+            A[API Server]
+            B[Compute Server]
+            C[XYZ Server]
+        end
+
+        %% Concurrency Adapter to access the new concurrency model
+        subgraph Adapter [Concurrency Adapter]
+            J[Migration Interface]
+        end
+
+        %% New Concurrency Model used by all processes
+        subgraph Migrated [New Concurrency - Migrated]
+            G[Database Connection - Migrated]
+            H[RPC Communications - Migrated]
+            I[Security Management - Migrated]
+        end
+
+        %% All processes use the adapter
+        A ---|Uses Adapter| J
+        B ---|Uses Adapter| J
+        C ---|Uses Adapter| J
+
+        %% The adapter directs to the new concurrency model
+        J --> G
+        J --> H
+        J --> I
+    </div>
+
+    <h4 class="mt-6 text-xl font-bold mb-4">Explanation</h4>
+    <p class="mt-4 text-xl">
+        <strong>Unified Abstraction:</strong> All business processes now leverage the concurrency adapter, ensuring consistent access to the new concurrency model.
+    </p>
+    <p class="mt-4 text-xl">
+        <strong>Centralized Control:</strong> The adapter centralizes concurrency management, simplifying maintenance and future improvements.
+    </p>
+    <p class="mt-4 text-xl">
+        <strong>Smooth Transition:</strong> This stage confirms that all components interact consistently with the new model, paving the way for complete deprecation of Eventlet.
+    </p>
+
+    <hr class="my-10">
+
+    <h3 class="mt-10 text-2xl font-bold mb-6">5. Step 4: Adapter Removal (Simplified Final Architecture)</h3>
+
+    <h4 class="mt-6 text-xl font-bold mb-4">Description</h4>
+    <p class="mt-4 text-xl">
+        Once the migration is fully validated and the new concurrency model proves stable across all business processes, the adapter can be removed. The business processes are then directly integrated with the new concurrency framework, further simplifying the architecture.
+    </p>
+
+    <h4 class="mt-6 text-xl font-bold mb-4">Diagram</h4>
+    <div class="mt-10 mermaid">
+        %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#312e81', 'primaryTextColor': '#fff', 'primaryBorderColor': '#433e99', 'lineColor': '#ffffff', 'secondaryColor': '#312e81', 'tertiaryColor': '#312e81' }}}%%
+        flowchart TD
+        %% Business Processes
+        subgraph Business_Processes [Business Processes]
+            A[API Server]
+            B[Compute Server]
+            C[XYZ Server]
+        end
+
+        %% New Concurrency Model used by all processes
+        subgraph Migrated [New Concurrency - Migrated]
+            G[Database Connection - Migrated]
+            H[RPC Communications - Migrated]
+            I[Security Management - Migrated]
+        end
+
+        %% Direct Connections (Adapter removed)
+        A --> G
+        A --> H
+        A --> I
+
+        B --> G
+        B --> H
+        B --> I
+
+        C --> G
+        C --> H
+        C --> I
+    </div>
+
+    <h4 class="mt-6 text-xl font-bold mb-4">Explanation</h4>
+    <p class="mt-4 text-xl">
+        <strong>Removal of the Adapter:</strong> With the new concurrency model fully in place, the intermediary adapter becomes redundant and is removed.
+    </p>
+    <p class="mt-4 text-xl">
+        <strong>Simplified Architecture:</strong> Direct integration with the new concurrency model reduces complexity and may improve performance.
+    </p>
+    <p class="mt-4 text-xl">
+        <strong>Final State:</strong> This diagram represents the final state of your application, where all business processes are fully independent of Eventlet and operate under the chosen concurrency paradigm.
+    </p>
+
+    <hr class="my-10">
+
+    <h3 class="mt-10 text-2xl font-bold mb-6">6. Conclusion</h3>
+    <p class="mt-4 text-xl">
+        This report outlines a structured approach for migrating your application from an Eventlet-based concurrency model to an alternative solution (asyncio, threading, or a hybrid). The migration strategy comprises:
+    </p>
+    <ul class="list-disc pl-8 mt-4 text-xl space-y-2">
+        <li><strong>Initial State:</strong> All business processes depend on Eventlet.</li>
+        <li><strong>Partial Migration:</strong> Begin by refactoring one process (API Server) to use a concurrency adapter while the others continue using Eventlet.</li>
+        <li><strong>Complete Migration:</strong> Transition all business processes to use the adapter, ensuring a unified migration to the new concurrency model.</li>
+        <li><strong>Final Simplification:</strong> Remove the adapter once the new concurrency model is fully stable, resulting in a simplified and modernized architecture.</li>
+    </ul>
+    <p class="mt-4 text-xl">
+        By following this plan, you can minimize risks and ensure a smooth, controlled transition from Eventlet to your chosen alternative, ultimately enhancing the scalability and maintainability of your application.
+    </p>
+    <p class="mt-4 text-xl">
+        Feel free to adjust this approach according to your specific requirements and add further details such as testing strategies, performance benchmarks, and error handling mechanisms to ensure a successful migration.
     </p>
 </section>
