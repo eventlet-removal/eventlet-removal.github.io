@@ -6,6 +6,11 @@ layout: base
 footer: true
 title: Eventlet Removal - Stop Using Eventlet and Make your Python Software Future-Proofing
 permalink: /
+description: Learn how to remove Eventlet from your Python projects to improve stability, performance, and future compatibility. This comprehensive guide provides practical steps for migrating to modern asynchronous alternatives.
+keywords: eventlet removal, python concurrency, asyncio migration, threading, eventlet alternatives, monkey patching, green threads, python async
+og_type: website
+og_title: Eventlet Removal Guide - Future-Proof Your Python Software
+og_description: A comprehensive guide for migrating Python applications from Eventlet to modern asynchronous alternatives like AsyncIO and Threading.
 ---
 <!-- Hero Section -->
 <section class="h-screen flex items-center justify-center bg-cover bg-center" style="background-image: url('images/hero.jpg'); background-position: center 40%; background-repeat: no-repeat; background-size: cover;">
