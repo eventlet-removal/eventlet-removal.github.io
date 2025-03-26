@@ -10,8 +10,6 @@ og_description: Comprehensive answers to the most common questions about migrati
 ---
 
 <div class="work-in-progress">
-  <h2 class="wip-header">🚧 Work In Progress 🚧</h2>
-  <p>Our team is compiling comprehensive answers to your questions. This FAQ section is under active development.</p>
   <div class="wip-image">
     <img src="{{ site.baseurl }}/images/wip2.svg" alt="Work in Progress" class="wip-svg" />
   </div>

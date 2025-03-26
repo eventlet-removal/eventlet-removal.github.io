@@ -10,8 +10,6 @@ og_description: Step-by-step tutorials with practical code examples for migratin
 ---
 
 <div class="work-in-progress">
-  <h2 class="wip-header">🚧 Work In Progress 🚧</h2>
-  <p>Our tutorials are currently being developed. We're creating step-by-step guides to help with your migration process.</p>
   <div class="wip-image">
     <img src="{{ site.baseurl }}/images/wip2.svg" alt="Work in Progress" class="wip-svg" />
   </div>

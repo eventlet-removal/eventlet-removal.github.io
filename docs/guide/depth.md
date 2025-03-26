@@ -10,8 +10,6 @@ og_description: Learn how to approach complex migration scenarios where Eventlet
 ---
 
 <div class="work-in-progress">
-  <h2 class="wip-header">🚧 Work In Progress 🚧</h2>
-  <p>We're currently building this page. Please check back soon for completed content.</p>
   <div class="wip-image">
     <img src="{{ site.baseurl }}/images/wip2.svg" alt="Work in Progress" class="wip-svg" />
   </div>
