@@ -17,7 +17,7 @@ og_description: Compare AsyncIO and native threading as modern alternatives to E
 </section>
 <section>
     <div class="mt-10">
-        <h2 class="text-4xl font-bold mb-6">Advantages of AsyncIO</h2>
+        <h2 id="asyncio-advantages" class="text-3xl font-bold mb-6">Advantages of AsyncIO <a href="#asyncio-advantages" class="text-cyan-400 text-xl">🔗</a></h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 mt-10">
             <div class="bg-indigo-900 p-6 rounded-lg shadow hover:shadow-xl hover:scale-110 transition-transform duration-300">
                 <h3 class="text-2xl font-bold mb-3">Explicit Asynchronous Programming</h3>
@@ -40,7 +40,7 @@ og_description: Compare AsyncIO and native threading as modern alternatives to E
 </section>
 <section>
     <div class="mt-10">
-        <h2 class="text-4xl font-bold mb-6">Advantages of Native Threads</h2>
+        <h2 id="native-threads-advantages" class="text-3xl font-bold mb-6">Advantages of Native Threads <a href="#native-threads-advantages" class="text-cyan-400 text-xl">🔗</a></h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 mt-10">
             <div class="bg-indigo-900 p-6 rounded-lg shadow hover:shadow-xl hover:scale-110 transition-transform duration-300">
                 <h3 class="text-2xl font-bold mb-3">True Parallelism</h3>
@@ -62,7 +62,7 @@ og_description: Compare AsyncIO and native threading as modern alternatives to E
     </div>
 </section>
 <section>
-    <h2 class="mt-10 text-3xl font-bold">Conclusion</h2>
+    <h2 id="conclusion" class="mt-10 text-3xl font-bold">Conclusion <a href="#conclusion" class="text-cyan-400 text-xl">🔗</a></h2>
     <p class="mt-10 text-xl">While Eventlet offers a means to achieve asynchronous programming through green threads and monkey patching, AsyncIO and native threads present robust alternatives. AsyncIO provides explicit and efficient asynchronous programming within Python's standard library, whereas native threads offer true parallelism and broad compatibility. The choice between these alternatives depends on the specific requirements of the project, such as the nature of the tasks (I/O-bound vs. CPU-bound) and the desired concurrency model.​</p>
 </section>
 <div class="mt-10 flex justify-between">

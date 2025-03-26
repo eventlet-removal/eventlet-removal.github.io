@@ -16,10 +16,10 @@ og_description: An in-depth analysis of the legal, technical, ethical, and busin
     <p class="mt-10 text-xl">If you are already convinced that you have to migrate off of Eventlet, then you can simply skip this chapter and jump directly to the next one, else, you are at the right place.</p>
 </section>
 <section>
-    <h2 class="mt-10 text-3xl font-bold">Arguments Against Eventlet</h2>
+    <h2 id="arguments-against-eventlet" class="mt-10 text-3xl font-bold">Arguments Against Eventlet <a href="#arguments-against-eventlet" class="text-cyan-400 text-xl">🔗</a></h2>
     <p class="mt-10 text-xl">It do not matter if you are a a developer, a project owner, a planning maker, or a business owner, everyone will find what they are looking for in the arguments set out below.</p>
 
-    <h3 class="mt-10 text-2xl font-bold">Eventlet is a Legal Danger</h3>
+    <h3 id="legal-danger" class="mt-10 text-2xl font-bold">Eventlet is a Legal Danger <a href="#legal-danger" class="text-cyan-400 text-xl">🔗</a></h3>
     <p class="mt-10 text-xl">Using obsolete and poorly maintained technologies, such as Eventlet, exposes companies to increased security vulnerabilities, thereby compromising the protection of personal data of their product users and their compliance with the GDPR and with data protection authority rules. In many cases, companies have been ordered to pay millions of dollars by courts around the world (<a href="https://en.wikipedia.org/wiki/Equifax#March_2017_security_breach" class="text-cyan-400" target="_blank">USA</a>, <a href="https://fr.wikipedia.org/wiki/Affaire_de_la_fuite_de_donn%C3%A9es_de_sant%C3%A9_de_laboratoires_fran%C3%A7ais" class="text-cyan-400" target="_blank">Europe</a>) due to a security breach in their systems. Data protection authorities, like the <a href="https://www.cnil.fr/en" class="text-cyan-400" target="_blank">CNIL</a> in France, often have the power to impose financial penalties reaching several million euros or, in the case of a company, up to 4% of its annual worldwide turnover.​</p>
 
     <p class="mt-10 text-xl">Obsolete technologies are more likely to contain unpatched vulnerabilities, increasing the risk of unauthorized access to personal data. The <a href="https://gdpr-info.eu/" class="text-cyan-400" target="_blank">GDPR</a> and data protection authorities require companies to implement appropriate measures to ensure the security of personal data, and failure to comply with these obligations can lead to severe sanctions.​</p>
@@ -28,7 +28,7 @@ og_description: An in-depth analysis of the legal, technical, ethical, and busin
 
     <p class="mt-10 text-xl text-yellow-300"><strong>Failing to remove Eventlet from your products exposes your business to legal penalties, for which you could be held personally liable in court</strong>.</p>
 
-    <h3 class="mt-10 text-2xl font-bold">Eventlet is a Productivity Killer</h3>
+    <h3 id="productivity-killer" class="mt-10 text-2xl font-bold">Eventlet is a Productivity Killer <a href="#productivity-killer" class="text-cyan-400 text-xl">🔗</a></h3>
     <p class="mt-10 text-xl">The use of Eventlet reduces the efficiency of development and maintenance teams by increasing cognitive load, debugging time, and coordination efforts. Due to monkey patching, standard libraries exhibit unpredictable behavior, forcing developers to spend considerable time identifying and fixing <a href="https://github.com/eventlet/eventlet/issues?q=is%3Aissue%20" class="text-cyan-400" target="_blank">hard-to-trace bugs</a>. Additionally, learning Eventlet presents an unnecessarily steep curve for both newcomers and experienced developers, requiring them to invest time in an obsolete tool.</p>
 
     <p class="mt-10 text-xl">This complexity leads to a fragmentation of skills within teams. Collaboration is also affected, as developers must document and explain the side effects of monkey patching, which burdens communication and disrupts workflow fluidity.</p>
@@ -39,7 +39,7 @@ og_description: An in-depth analysis of the legal, technical, ethical, and busin
 
     <p class="mt-10 text-xl text-yellow-300"><strong>Failing to remove Eventlet from your products destroy the productivity of your team</strong>.</p>
 
-    <h3 class="mt-10 text-2xl font-bold">Eventlet is An Ethical Problem</h3>
+    <h3 id="ethical-problem" class="mt-10 text-2xl font-bold">Eventlet is An Ethical Problem <a href="#ethical-problem" class="text-cyan-400 text-xl">🔗</a></h3>
     <p class="mt-10 text-xl">The continued use of Eventlet constitutes a failure to protect users, as it exposes their sensitive data and infrastructures to avoidable security risks. Due to its reliance on monkey patching, Eventlet dynamically modifies the behavior of standard libraries, introducing unpredictable and hard-to-detect side effects. This instability can lead to data leaks, service disruptions, or even exploitable security vulnerabilities. A user relying on your Eventlet based project to store critical data—such as personal information, medical records, or financial transactions—could see their data compromised without any way to protect themselves, simply because the platform is built on outdated technology.</p>
 
     <p class="mt-10 text-xl">The consequences of a security breach are severe for end users. Losing control over their data can result in privacy violations, identity theft, or even significant financial losses. If a vulnerability in Eventlet were to be exploited, it could have an irreversible impact on user trust in your products and all services that depend on it.</p>
@@ -52,7 +52,7 @@ og_description: An in-depth analysis of the legal, technical, ethical, and busin
 
     <p class="mt-10 text-xl text-yellow-300"><strong>Continuing to use Eventlet is like knowingly putting passengers on a defective plane — it might stay in the air for now, but a crash is inevitable. Choosing to ignore it is both unethical and irresponsible.</strong></p>
 
-    <h3 class="mt-10 text-2xl font-bold">Eventlet Destroy the credibility of your projects</h3>
+    <h3 id="credibility-destroyer" class="mt-10 text-2xl font-bold">Eventlet Destroy the credibility of your projects <a href="#credibility-destroyer" class="text-cyan-400 text-xl">🔗</a></h3>
     <p class="mt-10 text-xl">The use of Eventlet degrades the user experience by making application performance unpredictable and causing sudden interruptions, leading to frustration and a loss of trust among end users.</p>  
 
     <p class="mt-10 text-xl">Users expect consistency and responsiveness when interacting with a service, yet with Eventlet, they may experience smooth performance at one moment, only to face unexplained slowdowns the next, even under similar conditions. This inconsistency stems from Eventlet’s inefficient thread and I/O management, which can cause some requests to be delayed unpredictably. Worse still, Eventlet’s reliance on monkey patching introduces unforeseen behaviors and hard-to-trace errors, leading to sudden crashes that interrupt user actions without warning. As a result, users may lose progress, face downtime, or experience disruptions at critical moments, all without any clear explanation.</p>
@@ -69,7 +69,7 @@ og_description: An in-depth analysis of the legal, technical, ethical, and busin
 </section>
 
 <section>
-    <h2 class="mt-10 text-3xl font-bold">What Are Our Motivations</h2>
+    <h2 id="our-motivations" class="mt-10 text-3xl font-bold">What Are Our Motivations <a href="#our-motivations" class="text-cyan-400 text-xl">🔗</a></h2>
     <p class="mt-10 text-xl">We are the core maintainers of Eventlet. We argument against the product we maintain. Do not get us wrong, this is not a gratuitous attack on someone else. We daily observe all these problems from the inside, and, we think, that it is our responsability to inform our end users.</p>
     <p class="mt-10 text-xl">We think, that it is our responsability to lead our end users toward a solution. This is why <a href="https://github.com/eventlet/eventlet/issues/824" class="text-cyan-400" target="_blank">we decided to abandon the maintenance of Eventlet</a> in <a href="https://review.opendev.org/c/openstack/governance/+/902585" class="text-cyan-400" target="_blank">a planified way</a>, and this is why we decided to create this guide.</p>
 </section>
