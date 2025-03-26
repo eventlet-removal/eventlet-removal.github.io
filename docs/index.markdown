@@ -16,7 +16,7 @@ og_description: A comprehensive guide for migrating Python applications from Eve
 <section class="h-screen flex items-center justify-center bg-cover bg-center" style="background-image: url('images/hero.jpg'); background-position: center 40%; background-repeat: no-repeat; background-size: cover;">
     <div class="bg-gray-950 bg-opacity-80 p-10 rounded-lg text-center">
     <h1 class="text-5xl font-extrabold mb-4">This website learn you<br>How to <span class="text-yellow-500">Remove</span><span class="text-teal-300"> Eventlet</span><br> from your software</h1>
-    <p class="mb-6 text-xl">We are not going to turn around pot,<br>Eventlet is a technology from another age,<br>which produce more headaches than solutions.</p>
+    <p class="mb-6 text-xl">We're not going to beat around the bush,<br>Eventlet is a technology from another age,<br>which produce more headaches than solutions.</p>
     <p class="mb-6 text-xl"><strong>If you want your project to keep running then it is time to replace it!</strong></p>
     <a href="{{ site.baseurl }}{% link guide/getting-started.md %}" class="mt-4 inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">Getting Started</a>
     </div>
