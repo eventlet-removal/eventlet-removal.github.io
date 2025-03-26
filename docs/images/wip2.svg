@@ -83,7 +83,7 @@
   <!-- Données holographiques -->
   <g font-family="monospace" fill="#00d4ff" font-size="10" opacity="0.7">
     <text x="220" y="130">SYSTEM INIT: OK</text>
-    <text x="500" y="130">ASYNC CORE: ACTIVE</text>
+    <text x="488" y="130">ASYNC CORE: ACTIVE</text>
     <text x="220" y="380">BUFFER: 97.3%</text>
     <text x="500" y="380">NETWORK: SECURED</text>
     
@@ -93,8 +93,27 @@
       <animate attributeName="opacity" values="0.4;0.8;0.4" dur="3s" repeatCount="indefinite"/>
     </text>
     <text x="480" y="280" text-anchor="middle">
-      <tspan>HASH: F8A7D6C3B2</tspan>
-      <animate attributeName="opacity" values="0.4;0.8;0.4" dur="2.5s" repeatCount="indefinite"/>
+      <tspan x="460">HASH: </tspan>
+      <!-- Remplacer les hashs par des tspans positionnés au même endroit -->
+      <tspan x="510" id="hash1">F8A7D6C3B2
+        <animate attributeName="opacity" values="1;0;0;0;0;0" dur="20s" repeatCount="indefinite"/>
+      </tspan>
+      <tspan x="510" id="hash2" opacity="0">X4B9E2F7A1
+        <animate attributeName="opacity" values="0;1;0;0;0;0" dur="20s" repeatCount="indefinite"/>
+      </tspan>
+      <tspan x="510" id="hash3" opacity="0">73C5D8F1E9
+        <animate attributeName="opacity" values="0;0;1;0;0;0" dur="20s" repeatCount="indefinite"/>
+      </tspan>
+      <tspan x="510" id="hash4" opacity="0">A2E7F9B3C4
+        <animate attributeName="opacity" values="0;0;0;1;0;0" dur="20s" repeatCount="indefinite"/>
+      </tspan>
+      <tspan x="510" id="hash5" opacity="0">D5F8E2A1B9
+        <animate attributeName="opacity" values="0;0;0;0;1;0" dur="20s" repeatCount="indefinite"/>
+      </tspan>
+      <tspan x="510" id="hash6" opacity="0">C7D3E9F4A2
+        <animate attributeName="opacity" values="0;0;0;0;0;1" dur="20s" repeatCount="indefinite"/>
+      </tspan>
+      <animate attributeName="opacity" values="0.4;0.8;0.4" dur="5s" repeatCount="indefinite"/>
     </text>
   </g>
 
@@ -108,7 +127,7 @@
   </text>
 
   <!-- Barre de chargement animée améliorée -->
-  <g transform="translate(200, 550)">
+  <g transform="translate(200, 460)">
     <rect width="400" height="20" rx="10" ry="10" fill="#1f2a44" stroke="#00d4ff" stroke-width="2" />
     <rect id="progress" x="2" y="2" width="0" height="16" rx="8" ry="8" fill="url(#dataFlow)">
       <animate attributeName="width" from="0" to="396" dur="3s" repeatCount="indefinite" />
