@@ -12,8 +12,8 @@ og_description: Create an effective timeline for your Eventlet migration project
 <section>
     <h1 class="text-4xl font-bold mb-6">Sequencing the Migration</h1>
     <p class="mt-10 text-xl">This chapter aims to give you an overview of the various timeline of the migration. From your point of view. From the life cycle of Eventlet point of view and its integration with versions of CPython. And to finish from the point of view of the migration of OpenStack.</p>
-    <h2 class="mt-10 text-3xl font-bold mb-6">Your Migration</h2>
-    <p class="mt-10 text-xl">The Gantt diagram below aim to give you an overview of how the removal of Eventlet from your deliverable could looks if started at 2025 March 19th.</p>
+    <h2 id="your-migration" class="mt-10 text-3xl font-bold mb-6">Your Migration <a href="#your-migration" class="text-cyan-400 text-xl">🔗</a></h2>
+    <p class="mt-10 text-xl">The Gantt diagram below aims to give you an overview of how the removal of Eventlet from your deliverable could looks if started at 2025 March 19th.</p>
     <div class="mt-10 mermaid">
         %%{init: {'theme': 'dark', 'gantt': {'titleColor': '#ffffff', 'sectionColor': '#ffffff', 'taskColor': '#ffffff', 'taskTextColor': '#ffffff'}}}%%
         gantt
@@ -46,8 +46,8 @@ og_description: Create an effective timeline for your Eventlet migration project
             Gradual deployment         :val2, after val1, 14d
             Removing requirements      :val3, after val2, 2d
     </div>
-    <h2 class="mt-10 text-3xl font-bold mb-6">How Is Sequenced the Global Retirement Of Eventlet</h2>
-    <p class="mt-10 text-xl">The Gantt diagram below aim to give you an overview of the global retirement plan of Eventlet and what support and next steps you should expect.</p>
+    <h2 id="eventlet-retirement" class="mt-10 text-3xl font-bold mb-6">How Is Sequenced the Global Retirement Of Eventlet <a href="#eventlet-retirement" class="text-cyan-400 text-xl">🔗</a></h2>
+    <p class="mt-10 text-xl">The Gantt diagram below aims to give you an overview of the global retirement plan of Eventlet and what support and next steps you should expect.</p>
     <p class="mt-10 text-xl mt-4 text-xl text-yellow-300"><strong>Support of Eventlet will end by April 2027. Past this date if your migration is not finished, you will have to pin your requirements and you will have to stick to the CPython versions supported by the version of Eventlet you are using. We strongly recommend you to not pass over this date.</strong></p>
     <div class="mt-10 mermaid">
         %%{init: {'theme': 'dark', 'gantt': {'titleColor': '#ffffff', 'sectionColor': '#ffffff', 'taskColor': '#ffffff', 'taskTextColor': '#ffffff'}}}%%
@@ -80,8 +80,8 @@ og_description: Create an effective timeline for your Eventlet migration project
             Stop supporting not AsyncIO hubs        :sta3, 2026-04-01, 51w
             Stop fixing bugs                        :sta4, 2027-01-01, 12w
         </div>
-    <h2 class="mt-10 text-3xl font-bold mb-6">How Is Sequenced the abandon of Eventlet in OpenStack</h2>
-    <p class="mt-10 text-xl">The Gantt diagram below aim to give you an overview of the Eventlet removal plan OpenStack and what support and next steps you should expect.</p>
+    <h2 id="openstack-migration" class="mt-10 text-3xl font-bold mb-6">How Is Sequenced the abandon of Eventlet in OpenStack <a href="#openstack-migration" class="text-cyan-400 text-xl">🔗</a></h2>
+    <p class="mt-10 text-xl">The Gantt diagram below aims to give you an overview of the Eventlet removal plan OpenStack and what support and next steps you should expect.</p>
     <div class="mt-10 mermaid">
         %%{init: {'theme': 'dark', 'gantt': {'titleColor': '#ffffff', 'sectionColor': '#ffffff', 'taskColor': '#ffffff', 'taskTextColor': '#ffffff'}}}%%
 
