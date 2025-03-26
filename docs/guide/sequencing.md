@@ -12,6 +12,17 @@ og_description: Create an effective timeline for your Eventlet migration project
 <section>
     <h1 class="text-4xl font-bold mb-6">Sequencing the Migration</h1>
     <p class="mt-10 text-xl">This chapter aims to give you an overview of the various timeline of the migration. From your point of view. From the life cycle of Eventlet point of view and its integration with versions of CPython. And to finish from the point of view of the migration of OpenStack.</p>
+
+    <div class="mt-6 p-4 rounded-lg futuristic-section">
+        <div class="bg-gray-900 bg-opacity-70 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4">Table of Contents</h2>
+            <ul class="space-y-2">
+                <li><a href="#your-migration" class="text-cyan-400 hover:underline">Your Migration</a></li>
+                <li><a href="#eventlet-retirement" class="text-cyan-400 hover:underline">How Is Sequenced the Global Retirement Of Eventlet</a></li>
+                <li><a href="#openstack-migration" class="text-cyan-400 hover:underline">How Is Sequenced the abandon of Eventlet in OpenStack</a></li>
+            </ul>
+        </div>
+    </div>
     <h2 id="your-migration" class="mt-10 text-3xl font-bold mb-6">Your Migration <a href="#your-migration" class="text-cyan-400 text-xl">🔗</a></h2>
     <p class="mt-10 text-xl">The Gantt diagram below aims to give you an overview of how the removal of Eventlet from your deliverable could looks if started at 2025 March 19th.</p>
     <div class="mt-10 mermaid">

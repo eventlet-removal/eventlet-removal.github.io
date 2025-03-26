@@ -14,6 +14,20 @@ og_description: An in-depth analysis of the legal, technical, ethical, and busin
 <section>
     <h1 class="text-4xl font-bold">Risks of Eventlet</h1>
     <p class="mt-10 text-xl">If you are already convinced that you have to migrate off of Eventlet, then you can simply skip this chapter and jump directly to the next one, else, you are at the right place.</p>
+
+    <div class="mt-6 p-4 rounded-lg futuristic-section">
+        <div class="bg-gray-900 bg-opacity-70 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4">Table of Contents</h2>
+            <ul class="space-y-2">
+                <li><a href="#arguments-against-eventlet" class="text-cyan-400 hover:underline">Arguments Against Eventlet</a></li>
+                <li class="ml-4"><a href="#legal-danger" class="text-cyan-400 hover:underline">Legal Danger</a></li>
+                <li class="ml-4"><a href="#productivity-killer" class="text-cyan-400 hover:underline">Productivity Killer</a></li>
+                <li class="ml-4"><a href="#ethical-problem" class="text-cyan-400 hover:underline">Ethical Problem</a></li>
+                <li class="ml-4"><a href="#credibility-destroyer" class="text-cyan-400 hover:underline">Credibility Destroyer</a></li>
+                <li><a href="#our-motivations" class="text-cyan-400 hover:underline">What Are Our Motivations</a></li>
+            </ul>
+        </div>
+    </div>
 </section>
 <section>
     <h2 id="arguments-against-eventlet" class="mt-10 text-3xl font-bold">Arguments Against Eventlet <a href="#arguments-against-eventlet" class="text-cyan-400 text-xl">🔗</a></h2>

@@ -14,6 +14,17 @@ og_description: Compare AsyncIO and native threading as modern alternatives to E
 <section>
     <h1 class="text-4xl font-bold">Understanding the Alternatives</h1>
     <p class="mt-10 text-xl">Eventlet is designed to facilitate asynchronous programming using green threads and monkey patching. Alternatives such as <a href="https://docs.python.org/fr/3.13/library/asyncio.html"  class="text-cyan-400" target="_blank">AsyncIO</a> and <a href="https://docs.python.org/fr/3.13/library/threading.html"  class="text-cyan-400" target="_blank">native threads</a> offer different approaches to concurrency and asynchrony, making them viable replacements for Eventlet.​</p>
+
+    <div class="mt-6 p-4 rounded-lg futuristic-section">
+        <div class="bg-gray-900 bg-opacity-70 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4">Table of Contents</h2>
+            <ul class="space-y-2">
+                <li><a href="#asyncio-advantages" class="text-cyan-400 hover:underline">Advantages of AsyncIO</a></li>
+                <li><a href="#native-threads-advantages" class="text-cyan-400 hover:underline">Advantages of Native Threads</a></li>
+                <li><a href="#conclusion" class="text-cyan-400 hover:underline">Conclusion</a></li>
+            </ul>
+        </div>
+    </div>
 </section>
 <section>
     <div class="mt-10">

@@ -15,6 +15,16 @@ og_description: A deep dive into how Eventlet works, its common usage patterns, 
 <section>
     <h1 class="text-4xl font-bold">Understanding Eventlet</h1>
     <p class="mt-10 text-xl">Eventlet is a Python concurrent network programming library created nearly 18 years ago. Its intent is to propose asynchronous feature at destination of the Python ecosystem. Eventlet has been created at a time where the Python standard library was not designed to support async. Since then, a lot of water has flowed under the bridge, and AsyncIO emerged from async waves.</p>
+    
+    <div class="mt-6 p-4 rounded-lg futuristic-section">
+        <div class="bg-gray-900 bg-opacity-70 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4">Table of Contents</h2>
+            <ul class="space-y-2">
+                <li><a href="#common-usages" class="text-cyan-400 hover:underline">Common Usages of Eventlet</a></li>
+                <li><a href="#promises" class="text-cyan-400 hover:underline">The promises of Eventlet</a></li>
+            </ul>
+        </div>
+    </div>
 </section>
 <section>
     <div class="mt-10">

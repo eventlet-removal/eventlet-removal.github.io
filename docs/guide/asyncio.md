@@ -12,9 +12,24 @@ og_description: Detailed step-by-step instructions for refactoring Eventlet code
 <section>
     <h1 class="text-4xl font-bold mb-6">Migrating to AsyncIO</h1>
     <p class="mt-10 text-xl">This chapter aims to guide you through the process of migrating your codebase from Eventlet to AsyncIO. We will cover the necessary steps, best practices, and <a href="#common-pitfalls" class="text-cyan-400">common pitfalls</a> to avoid during the migration.</p>
+    
+    <div class="mt-6 p-4 rounded-lg futuristic-section">
+        <div class="bg-gray-900 bg-opacity-70 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4">Table of Contents</h2>
+            <ul class="space-y-2">
+                <li><a href="#overview-of-asyncio" class="text-cyan-400 hover:underline">Overview of AsyncIO</a></li>
+                <li><a href="#steps-to-migrate" class="text-cyan-400 hover:underline">Steps to Migrate</a></li>
+                <li><a href="#replacing-eventlet-with-asyncio" class="text-cyan-400 hover:underline">Replacing Eventlet with AsyncIO</a></li>
+                <li><a href="#advanced-scenarios" class="text-cyan-400 hover:underline">Advanced Migration Scenarios</a></li>
+                <li><a href="#sync-async-adapter" class="text-cyan-400 hover:underline">Sync-Async Adapter Pattern</a></li>
+                <li><a href="#asyncio-libraries" class="text-cyan-400 hover:underline">AsyncIO Libraries</a></li>
+                <li><a href="#common-pitfalls" class="text-cyan-400 hover:underline">Common Pitfalls</a></li>
+            </ul>
+        </div>
+    </div>
 </section>
 <section>
-    <h2 class="mt-10 text-3xl font-bold mb-6">Overview of AsyncIO</h2>
+    <h2 id="overview-of-asyncio" class="mt-10 text-3xl font-bold mb-6">Overview of AsyncIO</h2>
     <p class="mt-10 text-xl">AsyncIO is a library to write concurrent code using the async/await syntax. It is part of the Python standard library and provides a foundation for asynchronous programming in Python.</p>
     <p class="mt-10 text-xl">AsyncIO allows you to write programs that can handle many tasks at once, such as network requests, file I/O, and other I/O-bound operations, without blocking the main thread. This is achieved through the use of coroutines, which are special functions that can pause and resume their execution, allowing other coroutines to run in the meantime.</p>
     <p class="mt-10 text-xl">The core components of AsyncIO include:</p>
@@ -28,7 +43,7 @@ og_description: Detailed step-by-step instructions for refactoring Eventlet code
     <p class="mt-10 text-xl">For more details, you can consult the official AsyncIO documentation <a href="https://docs.python.org/3.13/library/asyncio.html" class="text-cyan-400" target="_blank">here</a>.</p>
 </section>
 <section>
-    <h2 class="mt-10 text-3xl font-bold mb-6">Steps to Migrate</h2>
+    <h2 id="steps-to-migrate" class="mt-10 text-3xl font-bold mb-6">Steps to Migrate</h2>
     <p class="mt-10 text-xl">The following steps outline the process of migrating from Eventlet to AsyncIO:</p>
     <ol class="mt-10 text-xl list-decimal list-inside">
         <li><a href="{{ site.baseurl }}{% link guide/preparing.md %}#locate-eventlet-usages" class="text-cyan-400">Identify Eventlet usages</a> in your codebase.</li>
@@ -39,7 +54,7 @@ og_description: Detailed step-by-step instructions for refactoring Eventlet code
     </ol>
 </section>
 <section>
-    <h2 class="mt-10 text-3xl font-bold mb-6">Replacing Eventlet with AsyncIO</h2>
+    <h2 id="replacing-eventlet-with-asyncio" class="mt-10 text-3xl font-bold mb-6">Replacing Eventlet with AsyncIO</h2>
     <p class="mt-10 text-xl">This section provides examples of how to replace common Eventlet-specific code with AsyncIO equivalents. For each common Eventlet usage, we'll show how to refactor the code using AsyncIO.</p>
     
     <div class="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-10">
@@ -750,6 +765,6 @@ print(result)</code></pre>
     </div>
 </section>
 <section>
-    <h2 class="mt-10 text-3xl font-bold mb-6">Conclusion</h2>
+    <h2 id="conclusion" class="mt-10 text-3xl font-bold mb-6">Conclusion</h2>
     <p class="mt-10 text-xl">Migrating to AsyncIO can significantly improve the performance and scalability of your application. Follow the steps outlined in this guide and be mindful of common pitfalls to ensure a smooth migration process.</p>
 </section>

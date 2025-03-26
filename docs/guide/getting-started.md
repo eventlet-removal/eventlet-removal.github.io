@@ -14,6 +14,18 @@ og_description: Learn why migrating from Eventlet is essential and what benefits
 <section>
     <h1 class="text-4xl font-bold">Getting Started</h1>
     <p class="mt-10 text-xl">Welcome to the Eventlet Migration Guide! This comprehensive resource is designed to assist developers, system administrators, and technical decision-makers in transitioning from Eventlet to more modern and supported concurrency libraries in Python.</p>
+
+    <div class="mt-6 p-4 rounded-lg futuristic-section">
+        <div class="bg-gray-900 bg-opacity-70 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4">Table of Contents</h2>
+            <ul class="space-y-2">
+                <li><a href="#why-migrate" class="text-cyan-400 hover:underline">Why Migrate from Eventlet?</a></li>
+                <li><a href="#migration-benefits" class="text-cyan-400 hover:underline">What Benefits Will You Get From Migrating?</a></li>
+                <li><a href="#guide-objectives" class="text-cyan-400 hover:underline">Objectives of This Guide</a></li>
+                <li><a href="#how-to-use" class="text-cyan-400 hover:underline">How to Use This Guide</a></li>
+            </ul>
+        </div>
+    </div>
 </section>
 
 <section>
