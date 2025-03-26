@@ -14,8 +14,23 @@ og_description: Comprehensive code patterns and best practices for replacing Eve
 
 <p class="mt-10 text-xl">This chapter aims to guide you through the process of migrating your codebase from Eventlet to Python native threading. We will cover the necessary steps, best practices, and common pitfalls to avoid during the migration.</p>
 
+<div class="mt-6 p-4 rounded-lg futuristic-section">
+    <div class="bg-gray-900 bg-opacity-70 p-6 rounded-lg">
+        <h2 class="text-2xl font-bold mb-4">Table of Contents</h2>
+        <ul class="space-y-2">
+            <li><a href="#overview-of-threading" class="text-cyan-400 hover:underline">Overview of Threading</a></li>
+            <li><a href="#replacing-eventlet-with-threading" class="text-cyan-400 hover:underline">Replacing Eventlet with Threading</a></li>
+            <li><a href="#key-migration-patterns" class="text-cyan-400 hover:underline">Key Migration Patterns</a></li>
+            <li><a href="#threading-libraries" class="text-cyan-400 hover:underline">Threading Libraries</a></li>
+            <li><a href="#common-pitfalls" class="text-cyan-400 hover:underline">Common Pitfalls</a></li>
+            <li><a href="#best-practices-and-considerations" class="text-cyan-400 hover:underline">Best Practices and Considerations</a></li>
+            <li><a href="#conclusion" class="text-cyan-400 hover:underline">Conclusion</a></li>
+        </ul>
+    </div>
+</div>
+
 <section>
-    <h2 class="mt-10 text-3xl font-bold mb-6">Overview of Threading</h2>
+    <h2 id="overview-of-threading" class="mt-10 text-3xl font-bold mb-6">Overview of Threading <a href="#overview-of-threading" class="text-cyan-400 text-xl">🔗</a></h2>
     <p class="mt-10 text-xl">Threading is a built-in Python module that allows you to run multiple operations concurrently in the same process space. It is part of the Python standard library and provides a foundation for concurrent programming in Python without the need for monkey patching.</p>
     
     <p class="mt-10 text-xl">Threading enables your applications to perform multiple operations in parallel, especially for I/O-bound tasks like network requests, file operations, and database queries. Unlike Eventlet's green threads, Python's threading module uses actual system threads, allowing for true parallelism on multi-core systems, though still subject to the Global Interpreter Lock (GIL) for CPU-bound tasks.</p>
@@ -37,7 +52,7 @@ og_description: Comprehensive code patterns and best practices for replacing Eve
 
 
 <section>
-    <h2 class="mt-10 text-3xl font-bold mb-6">Replacing Eventlet with Threading</h2>
+    <h2 id="replacing-eventlet-with-threading" class="mt-10 text-3xl font-bold mb-6">Replacing Eventlet with Threading <a href="#replacing-eventlet-with-threading" class="text-cyan-400 text-xl">🔗</a></h2>
     <p class="mt-10 text-xl">This section provides examples of how to replace common Eventlet-specific code with Threading equivalents. For each common Eventlet usage, we'll show how to refactor the code using Python's native threading module.</p>
     
     <div class="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-10">
@@ -416,7 +431,7 @@ consumer_thread.join()</code></pre>
 </section>
 
 <section>
-    <h2 class="mt-10 text-3xl font-bold mb-6">Key Migration Patterns</h2>
+    <h2 id="key-migration-patterns" class="mt-10 text-3xl font-bold mb-6">Key Migration Patterns <a href="#key-migration-patterns" class="text-cyan-400 text-xl">🔗</a></h2>
     <p class="text-xl">This section is a curated list of migration patterns that you might meet during your journey.</p>
 
     <div class="mt-8">
@@ -776,7 +791,7 @@ job = q.enqueue(long_running_function, arg1, arg2)
 </section>
 
 <section>
-    <h2 class="mt-10 text-3xl font-bold mb-6">Best Practices and Considerations</h2>
+    <h2 id="best-practices-and-considerations" class="mt-10 text-3xl font-bold mb-6">Best Practices and Considerations <a href="#best-practices-and-considerations" class="text-cyan-400 text-xl">🔗</a></h2>
 
     <ul class="mt-6 text-xl space-y-6">
         <li>
@@ -799,7 +814,7 @@ job = q.enqueue(long_running_function, arg1, arg2)
 </section>
 
 <section>
-    <h2 class="mt-10 text-3xl font-bold mb-6">Conclusion</h2>
+    <h2 id="conclusion" class="mt-10 text-3xl font-bold mb-6">Conclusion <a href="#conclusion" class="text-cyan-400 text-xl">🔗</a></h2>
 
     <p class="mt-6 text-xl">Migrating from Eventlet to native threading offers several key benefits:</p>
     
