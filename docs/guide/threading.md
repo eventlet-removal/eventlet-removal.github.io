@@ -439,13 +439,13 @@ consumer_thread.join()</code></pre>
         
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">Before (Eventlet):</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">import eventlet
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">import eventlet
 eventlet.monkey_patch()</code></pre>
         </div>
         
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">After (Native Threading):</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python"># Explicit imports without altering the behavior of standard modules
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python"># Explicit imports without altering the behavior of standard modules
 import socket
 import threading</code></pre>
         </div>
@@ -458,7 +458,7 @@ import threading</code></pre>
         
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">Before (Eventlet):</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">import eventlet
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">import eventlet
 
 # Asynchronous launch
 eventlet.spawn(process_data, data)
@@ -469,7 +469,7 @@ eventlet.spawn_after(delay, function)</code></pre>
         
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">After (Threading):</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">import threading
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">import threading
 
 # Launch a thread
 threading.Thread(target=process_data, args=(data,)).start()
@@ -484,7 +484,7 @@ threading.Timer(delay, function).start()</code></pre>
         
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">Before (Eventlet):</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">import eventlet
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">import eventlet
 
 pool = eventlet.GreenPool(100)
 for item in items:
@@ -494,7 +494,7 @@ pool.waitall()</code></pre>
         
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">After (Using ThreadPoolExecutor):</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">from concurrent.futures import ThreadPoolExecutor
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">from concurrent.futures import ThreadPoolExecutor
 
 with ThreadPoolExecutor(max_workers=100) as executor:
     futures = [executor.submit(process_item, item) for item in items]
@@ -504,7 +504,7 @@ with ThreadPoolExecutor(max_workers=100) as executor:
 
         <div class="mt-4 mb-6">
             <p  class="text-xl">To replace GreenPool with a dynamically resizable thread pool, you can use a custom implementation of a thread pool that allows resizing. Below is an example of how you can achieve this using Python's threading module:</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">import threading
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">import threading
 from queue import Queue
 import time
 
@@ -572,7 +572,7 @@ pool.join()</code></pre>
         
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">Before (Eventlet):</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">import eventlet
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">import eventlet
 
 try:
     with eventlet.Timeout(5):
@@ -584,7 +584,7 @@ except eventlet.Timeout:
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">After (Using signal or join with timeout):</p>
             <p class="mt-2 text-xl italic">Example using the signal module:</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">import signal
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">import signal
 
 def handler(signum, frame):
     raise TimeoutError("Operation timed out")
@@ -600,7 +600,7 @@ finally:
     signal.alarm(0)  # Cancel the timeout</code></pre>
 
             <p class="mt-4 text-xl italic">Example using a thread with join:</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">thread = threading.Thread(target=function)
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">thread = threading.Thread(target=function)
 thread.start()
 thread.join(timeout=timeout_value)
 
@@ -615,13 +615,13 @@ if thread.is_alive():
         
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">Before (Eventlet):</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">import eventlet
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">import eventlet
 eventlet.sleep(0.5)</code></pre>
         </div>
         
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">After (Using time.sleep):</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">import time
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">import time
 time.sleep(0.5)</code></pre>
         </div>
     </div>
@@ -631,7 +631,7 @@ time.sleep(0.5)</code></pre>
         
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">Before (Eventlet):</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">from eventlet import semaphore, event
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">from eventlet import semaphore, event
 
 lock = semaphore.Semaphore()
 flag = event.Event()</code></pre>
@@ -639,7 +639,7 @@ flag = event.Event()</code></pre>
         
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">After (Threading):</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">import threading
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">import threading
 
 lock = threading.Semaphore()
 flag = threading.Event()</code></pre>
@@ -651,13 +651,13 @@ flag = threading.Event()</code></pre>
         
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">Before (Eventlet):</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">import eventlet
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">import eventlet
 import eventlet.wsgi</code></pre>
         </div>
         
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">After (Using a standard WSGI server):</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">import socket
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">import socket
 from wsgiref.simple_server import make_server</code></pre>
         </div>
     </div>
@@ -667,7 +667,7 @@ from wsgiref.simple_server import make_server</code></pre>
         
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">Before (Eventlet):</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">from eventlet.green import socket
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">from eventlet.green import socket
 
 s = socket.socket()
 s.connect(('example.com', 80))</code></pre>
@@ -675,7 +675,7 @@ s.connect(('example.com', 80))</code></pre>
         
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">After (Using a server or standard I/O approach):</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">from wsgiref.simple_server import make_server
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">from wsgiref.simple_server import make_server
 
 server = make_server('0.0.0.0', 8080, app)
 server.serve_forever()</code></pre>
@@ -689,7 +689,7 @@ server.serve_forever()</code></pre>
         
         <div class="mt-4 mb-6">
             <p class="text-xl font-semibold">Example:</p>
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code class="language-python">thread = threading.Thread(target=function)
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">thread = threading.Thread(target=function)
 thread.start()
 thread.join()  # Wait for the thread to finish</code></pre>
         </div>
@@ -797,7 +797,7 @@ job = q.enqueue(long_running_function, arg1, arg2)
         <li>
             <strong>Active Thread Monitoring:</strong><br>
             Implement proactive logging to detect and manage threads that exceed expected runtimes.
-            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto mt-2"><code class="language-python">if thread.is_alive():
+            <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto mt-2 line-numbers"><code class="language-python">if thread.is_alive():
     LOG.warning("The action thread has exceeded the expected runtime.")</code></pre>
         </li>
         
