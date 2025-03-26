@@ -493,7 +493,7 @@ pool.waitall()</code></pre>
         </div>
         
         <div class="mt-4 mb-6">
-            <p class="text-xl font-semibold">After (Using ThreadPoolExecutor):</p>
+            <p class="text-xl font-semibold">After Using ThreadPoolExecutor (Static Size):</p>
             <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">from concurrent.futures import ThreadPoolExecutor
 
 with ThreadPoolExecutor(max_workers=100) as executor:
@@ -503,6 +503,7 @@ with ThreadPoolExecutor(max_workers=100) as executor:
         </div>
 
         <div class="mt-4 mb-6">
+            <p class="text-xl font-semibold">After Using ResizableThreadPool (A Dynamically Sized Thread Pool):</p>
             <p  class="text-xl">To replace GreenPool with a dynamically resizable thread pool, you can use a custom implementation of a thread pool that allows resizing. Below is an example of how you can achieve this using Python's threading module:</p>
             <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto line-numbers"><code class="language-python">import threading
 from queue import Queue
