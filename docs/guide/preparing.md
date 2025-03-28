@@ -24,7 +24,7 @@ og_description: Step-by-step instructions for auditing your codebase, identifyin
                 <li><a href="#is-eventlet-disablable" class="text-cyan-400 hover:underline">Is Eventlet Disablable?</a></li>
                 <li><a href="#choosing-an-alternative" class="text-cyan-400 hover:underline">Choosing an Alternative</a></li>
                 <li><a href="#split-your-works" class="text-cyan-400 hover:underline">Split your Works</a></li>
-                <li><a href="#migrating-applications-with-internal-private-apis" class="text-cyan-400 hover:underline">Migrating Applications with Internal Private APIs</a></li>
+                <li><a href="#migrating-shared-private-apis" class="text-cyan-400 hover:underline">Migrating Applications with Internal Private APIs</a></li>
                 <li><a href="#implementation-example" class="text-cyan-400 hover:underline">Implementation Example of Migrating Applications with Internal Private APIs</a></li>
             </ul>
         </div>
