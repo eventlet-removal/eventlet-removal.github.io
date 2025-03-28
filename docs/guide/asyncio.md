@@ -46,8 +46,15 @@ og_description: Detailed step-by-step instructions for refactoring Eventlet code
     <h2 id="steps-to-migrate" class="mt-10 text-3xl font-bold mb-6">Steps to Migrate</h2>
     <p class="mt-10 text-xl">The following steps outline the process of migrating from Eventlet to AsyncIO:</p>
     <ol class="mt-10 text-xl list-decimal list-inside">
+        <li><strong>Activate the AsyncIO hub in Eventlet:</strong> Begin by switching to Eventlet's AsyncIO hub to enable compatibility with AsyncIO code.
+            <pre class="line-numbers mt-4 ml-6"><code class="language-python">import eventlet
+eventlet.use_hub('asyncio')
+# If you use monkey patching, place it after hub activation
+eventlet.monkey_patch()</code></pre>
+            <p class="mt-2 ml-6">This critical first step allows you to gradually introduce AsyncIO code while maintaining compatibility with existing Eventlet code. For more details, refer to the <a href="https://eventlet.readthedocs.io/en/latest/asyncio/migration.html#step-1-switch-to-the-asyncio-hub" class="text-cyan-400" target="_blank">official Eventlet documentation</a>.</p>
+        </li>
         <li><a href="{{ site.baseurl }}{% link guide/preparing.md %}#locate-eventlet-usages" class="text-cyan-400">Identify Eventlet usages</a> in your codebase.</li>
-        <li>Replace Eventlet-specific code with AsyncIO equivalents.</li>
+        <li>Replace Eventlet-specific code with <a href="#replacing-eventlet-with-asyncio" class="text-cyan-400">AsyncIO equivalents</a>.</li>
         <li>Refactor synchronous code to use async/await syntax.</li>
         <li>Test the migrated code thoroughly to ensure functionality.</li>
         <li>Optimize performance and handle edge cases.</li>
