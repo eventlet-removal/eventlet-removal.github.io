@@ -63,14 +63,14 @@ async def high_level_function():
     </ul>
     
     <div class="mt-6 mermaid">
-        %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#312e81', 'primaryTextColor': '#fff', 'primaryBorderColor': '#433e99', 'lineColor': '#ffffff', 'secondaryColor': '#312e81', 'tertiaryColor': '#312e81' }}}%%
+        %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#312e81', 'primaryTextColor': '#000', 'primaryBorderColor': '#433e99', 'lineColor': '#ffffff', 'secondaryColor': '#312e81', 'tertiaryColor': '#312e81' }}}%%
         graph TD
         A[API Endpoint] --> B[Service Layer]
         B --> C[Business Logic]
         C --> D[Data Access]
         D --> E[Low-level I/O]
         
-        style E fill:#e11d48,stroke:#f43f5e
+        style E fill:#e11d48,stroke:#f43f5e,primaryTextColor:#fff
         style D fill:#fb7185,stroke:#f43f5e
         style C fill:#fda4af,stroke:#f43f5e
         style B fill:#fecdd3,stroke:#f43f5e
