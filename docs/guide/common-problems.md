@@ -14,3 +14,12 @@ og_description: Practical solutions to common problems and challenges encountere
     <img src="{{ site.baseurl }}/images/wip2.svg" alt="Work in Progress" class="wip-svg" />
   </div>
 </div>
+
+<div class="mt-10 flex justify-between">
+    <a href="{{ site.baseurl }}{% link guide/depth.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        <i class="fas fa-arrow-left mr-2"></i>Managing Migration Depth
+    </a>
+    <a href="{{ site.baseurl }}{% link guide/studies.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        Case Studies and Testimonials<i class="fas fa-arrow-right ml-2"></i>
+    </a>
+</div>

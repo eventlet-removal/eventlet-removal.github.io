@@ -775,3 +775,11 @@ print(result)</code></pre>
     <h2 id="conclusion" class="mt-10 text-3xl font-bold mb-6">Conclusion</h2>
     <p class="mt-10 text-xl">Migrating to AsyncIO can significantly improve the performance and scalability of your application. Follow the steps outlined in this guide and be mindful of common pitfalls to ensure a smooth migration process.</p>
 </section>
+<div class="mt-10 flex justify-between">
+    <a href="{{ site.baseurl }}{% link guide/sequencing.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        <i class="fas fa-arrow-left mr-2"></i>Sequencing the Migration
+    </a>
+    <a href="{{ site.baseurl }}{% link guide/threading.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        Migrating to Threading<i class="fas fa-arrow-right ml-2"></i>
+    </a>
+</div>

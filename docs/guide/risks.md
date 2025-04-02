@@ -87,3 +87,12 @@ og_description: An in-depth analysis of the legal, technical, ethical, and busin
     <p class="mt-10 text-xl">We are the core maintainers of Eventlet. We argument against the product we maintain. Do not get us wrong, this is not a gratuitous attack on someone else. We daily observe all these problems from the inside, and, we think, that it is our responsability to inform our end users.</p>
     <p class="mt-10 text-xl">We think, that it is our responsability to lead our end users toward a solution. This is why <a href="https://github.com/eventlet/eventlet/issues/824" class="text-cyan-400" target="_blank">we decided to abandon the maintenance of Eventlet</a> in <a href="https://review.opendev.org/c/openstack/governance/+/902585" class="text-cyan-400" target="_blank">a planified way</a>, and this is why we decided to create this guide.</p>
 </section>
+
+<div class="mt-10 flex justify-between">
+    <a href="{{ site.baseurl }}{% link guide/getting-started.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        <i class="fas fa-arrow-left mr-2"></i>Getting Started
+    </a>
+    <a href="{{ site.baseurl }}{% link guide/eventlet.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        Understanding Eventlet<i class="fas fa-arrow-right ml-2"></i>
+    </a>
+</div>

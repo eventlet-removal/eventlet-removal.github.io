@@ -7,20 +7,20 @@ layout: base
         ✖
     </button>
     <nav class="mt-20">
-        <a href="{{ site.baseurl }}{% link guide/getting-started.md %}" class="block px-4 py-3 hover:bg-gray-700 {% if page.title == 'Getting Started' %}bg-gray-800{% endif %}">Getting Started</a>
-        <a href="{{ site.baseurl }}{% link guide/risks.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.title == 'Risks of Eventlet' %}bg-gray-800{% endif %}">Eventlet's Risks</a>
-        <a href="{{ site.baseurl }}{% link guide/eventlet.md %}" class="block px-4 py-2 hover:bg-gray-700  {% if page.title == 'Understand Eventlet' %}bg-gray-800{% endif %}">Understanding Eventlet</a>
-        <a href="{{ site.baseurl }}{% link guide/alternatives.md %}" class="block px-4 py-2 hover:bg-gray-700  {% if page.title == 'Understand the Alternatives to Eventlet' %}bg-gray-800{% endif %}">Understanding the Alternatives</a>
-        <a href="{{ site.baseurl }}{% link guide/preparing.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.title == 'Preparing for Migration' %}bg-gray-800{% endif %}">Preparing for Migration</a>
-        <a href="{{ site.baseurl }}{% link guide/sequencing.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.title == 'Sequencing the Migration' %}bg-gray-800{% endif %}">Sequencing the Migration</a>
-        <a href="{{ site.baseurl }}{% link guide/asyncio.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.title == 'Migrating to AsyncIO' %}bg-gray-800{% endif %}">Migrating to AsyncIO</a>
-        <a href="{{ site.baseurl }}{% link guide/threading.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.title == 'Migrating to threading' %}bg-gray-800{% endif %}">Migrating to Threading</a>
-        <a href="{{ site.baseurl }}{% link guide/depth.md %}" class="block px-4 py-2 hover:bg-gray-700">Managing Depth - Awaitlet</a>
-        <a href="{{ site.baseurl }}{% link guide/common-problems.md %}" class="block px-4 py-2 hover:bg-gray-700">Managing Common Problems</a>
-        <a href="{{ site.baseurl }}{% link guide/studies.md %}" class="block px-4 py-2 hover:bg-gray-700">Case Studies and Testimonials</a>
-        <a href="{{ site.baseurl }}{% link guide/resources.md %}" class="block px-4 py-2 hover:bg-gray-700">Additional Resources</a>
-        <a href="{{ site.baseurl }}{% link guide/tutorials.md %}" class="block px-4 py-2 hover:bg-gray-700">Tutorials</a>
-        <a href="{{ site.baseurl }}{% link guide/faq.md %}" class="block px-4 py-2 hover:bg-gray-700">FAQs</a>
+        <a href="{{ site.baseurl }}{% link guide/getting-started.md %}" class="block px-4 py-3 hover:bg-gray-700 {% if page.url == '/guide/getting-started/' %}bg-gray-800{% endif %}">Getting Started</a>
+        <a href="{{ site.baseurl }}{% link guide/risks.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.url == '/guide/eventlet-risks/' %}bg-gray-800{% endif %}">Eventlet's Risks</a>
+        <a href="{{ site.baseurl }}{% link guide/eventlet.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.url == '/guide/understanding-eventlet/' %}bg-gray-800{% endif %}">Understanding Eventlet</a>
+        <a href="{{ site.baseurl }}{% link guide/alternatives.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.url == '/guide/alternatives/' %}bg-gray-800{% endif %}">Understanding the Alternatives</a>
+        <a href="{{ site.baseurl }}{% link guide/preparing.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.url == '/guide/preparing-for-migration/' %}bg-gray-800{% endif %}">Preparing for Migration</a>
+        <a href="{{ site.baseurl }}{% link guide/sequencing.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.url == '/guide/sequencing-the-migration/' %}bg-gray-800{% endif %}">Sequencing the Migration</a>
+        <a href="{{ site.baseurl }}{% link guide/asyncio.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.url == '/guide/migrating-to-asyncio/' %}bg-gray-800{% endif %}">Migrating to AsyncIO</a>
+        <a href="{{ site.baseurl }}{% link guide/threading.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.url == '/guide/migrating-to-threading/' %}bg-gray-800{% endif %}">Migrating to Threading</a>
+        <a href="{{ site.baseurl }}{% link guide/depth.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.url == '/guide/managing-migration-depth/' %}bg-gray-800{% endif %}">Managing Migration Depth</a>
+        <a href="{{ site.baseurl }}{% link guide/common-problems.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.url == '/guide/common-problems/' %}bg-gray-800{% endif %}">Managing Common Problems</a>
+        <a href="{{ site.baseurl }}{% link guide/studies.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.url == '/guide/cases-studies/' %}bg-gray-800{% endif %}">Case Studies and Testimonials</a>
+        <a href="{{ site.baseurl }}{% link guide/resources.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.url == '/guide/resources/' %}bg-gray-800{% endif %}">Additional Resources</a>
+        <a href="{{ site.baseurl }}{% link guide/tutorials.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.url == '/guide/tutorials/' %}bg-gray-800{% endif %}">Tutorials</a>
+        <a href="{{ site.baseurl }}{% link guide/faq.md %}" class="block px-4 py-2 hover:bg-gray-700 {% if page.url == '/guide/faq/' %}bg-gray-800{% endif %}">FAQs</a>
     </nav>
     <div class="absolute bottom-4 left-4 text-gray-500 text-sm">
         <a href="https://creativecommons.org/licenses/by-nd/4.0/deed.en" class="text-teal-300">CC BY-ND 4.0 license</a><br>

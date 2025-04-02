@@ -15,3 +15,10 @@ og_description: Comprehensive answers to the most common questions about migrati
   </div>
 </div>
 
+<div class="mt-10 flex justify-between">
+    <a href="{{ site.baseurl }}{% link guide/tutorials.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        <i class="fas fa-arrow-left mr-2"></i>Tutorials
+    </a>
+    <div><!-- No next page --></div>
+</div>
+

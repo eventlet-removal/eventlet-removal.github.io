@@ -77,6 +77,9 @@ og_description: Learn why migrating from Eventlet is essential and what benefits
     <p class="mt-10 text-xl">Let's get started!</p>
 </section>
 
-<div class="mt-10 text-right">
-    <a href="{{ site.baseurl }}{% link guide/eventlet.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">Understand Eventlet<i class="fas fa-arrow-right ml-2"></i></a>
+<div class="mt-10 flex justify-between">
+    <div><!-- No previous page --></div>
+    <a href="{{ site.baseurl }}{% link guide/risks.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        Eventlet's Risks<i class="fas fa-arrow-right ml-2"></i>
+    </a>
 </div>

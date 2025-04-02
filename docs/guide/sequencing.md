@@ -114,4 +114,12 @@ og_description: Create an effective timeline for your Eventlet migration project
             Remove deprecated parts of libraries    :prep9, after prep8, 12w
             Drop Eventlet from requirements         :prep10, after prep9, 2w
         </div>
+    <div class="mt-10 flex justify-between">
+        <a href="{{ site.baseurl }}{% link guide/preparing.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+            <i class="fas fa-arrow-left mr-2"></i>Preparing for Migration
+        </a>
+        <a href="{{ site.baseurl }}{% link guide/asyncio.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+            Migrating to AsyncIO<i class="fas fa-arrow-right ml-2"></i>
+        </a>
+    </div>
 </section>

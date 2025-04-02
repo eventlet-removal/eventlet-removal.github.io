@@ -837,3 +837,12 @@ job = q.enqueue(long_running_function, arg1, arg2)
     
     <p class="mt-6 text-xl">Whether applied in the specific context of OpenStack or in broader applications, adopting the practices presented in this chapter ensures a smooth transition to modern, robust threading mechanisms.</p>
 </section>
+
+<div class="mt-10 flex justify-between">
+    <a href="{{ site.baseurl }}{% link guide/asyncio.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        <i class="fas fa-arrow-left mr-2"></i>Migrating to AsyncIO
+    </a>
+    <a href="{{ site.baseurl }}{% link guide/depth.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        Managing Migration Depth<i class="fas fa-arrow-right ml-2"></i>
+    </a>
+</div>

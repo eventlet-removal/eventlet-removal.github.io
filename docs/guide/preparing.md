@@ -636,3 +636,12 @@ def fetch_data():
         Feel free to adjust this approach according to your specific requirements and add further details such as testing strategies, performance benchmarks, and error handling mechanisms to ensure a successful migration.
     </p>
 </section>
+
+<div class="mt-10 flex justify-between">
+    <a href="{{ site.baseurl }}{% link guide/alternatives.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        <i class="fas fa-arrow-left mr-2"></i>Understanding the Alternatives
+    </a>
+    <a href="{{ site.baseurl }}{% link guide/sequencing.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        Sequencing the Migration<i class="fas fa-arrow-right ml-2"></i>
+    </a>
+</div>

@@ -78,9 +78,9 @@ og_description: Compare AsyncIO and native threading as modern alternatives to E
 </section>
 <div class="mt-10 flex justify-between">
     <a href="{{ site.baseurl }}{% link guide/eventlet.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
-        <i class="fas fa-arrow-left mr-2"></i>Understand Eventlet
+        <i class="fas fa-arrow-left mr-2"></i>Understanding Eventlet
     </a>
-    <a href="{{ site.baseurl }}{% link guide/alternatives.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+    <a href="{{ site.baseurl }}{% link guide/preparing.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
         Preparing for Migration<i class="fas fa-arrow-right ml-2"></i>
     </a>
 </div>
