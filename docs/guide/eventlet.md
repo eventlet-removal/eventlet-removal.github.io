@@ -112,8 +112,8 @@ eventlet.sleep(1)  # This line does not allow other tasks to run</code></pre>
     <p class="mt-10 text-xl">Conclusion, Eventlet is theoretically cooperative, but in practice, it heavily relies on the proper behavior of the code and libraries used. It is not truly cooperative in all circumstances: if a blocking call or an infinite loop without <code class="text-xl language-python">sleep()</code> occurs, the entire program can freeze.</p>
 </section>
 <div class="mt-10 flex justify-between">
-    <a href="{{ site.baseurl }}{% link guide/getting-started.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
-        <i class="fas fa-arrow-left mr-2"></i>Getting Started
+    <a href="{{ site.baseurl }}{% link guide/risks.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        <i class="fas fa-arrow-left mr-2"></i>Eventlet's Risks
     </a>
     <a href="{{ site.baseurl }}{% link guide/alternatives.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
         Understanding the Alternatives<i class="fas fa-arrow-right ml-2"></i>
