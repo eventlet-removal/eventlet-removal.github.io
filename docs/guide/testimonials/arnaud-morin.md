@@ -17,7 +17,7 @@ og_description: Learn from Arnaud Morin's firsthand experience migrating OpenSta
     <div>
       <h2 class="text-2xl font-bold">Arnaud Morin</h2>
       <a href="https://www.arnaudmorin.fr/" target="_blank" class="text-cyan-400">https://www.arnaudmorin.fr/</a>
-      <p class="text-xl text-gray-300">OpenStack Contributor</p>
+      <p class="text-xl text-gray-300">Cloud DevOps & Virtualization Evangelist at <a href="https://www.ovhcloud.com/" target="_blank" class="text-cyan-400">OVH</a>, OpenStack Contributor</p>
       <p class="text-gray-400 mt-1">Working on OpenStack Mistral</p>
     </div>
   </div>
@@ -181,7 +181,7 @@ og_description: Learn from Arnaud Morin's firsthand experience migrating OpenSta
 </div>
 
 <div class="mt-10 flex justify-between">
-    <a href="{{ site.baseurl }}{% link guide/testimonials/index.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+    <a href="{{ site.baseurl }}{% link guide/testimonials.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
         <i class="fas fa-arrow-left mr-2"></i>All Testimonials
     </a>
     <div><!-- No next testimonial yet --></div>

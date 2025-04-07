@@ -1,31 +1,19 @@
 ---
 permalink: /guide/cases-studies/
-title: Case Studies and Testimonials
+title: Case Studies
 layout: dashboard
-description: Real-world examples and success stories from organizations and developers who have successfully migrated from Eventlet. These case studies and testimonials provide practical insights, lessons learned, and proven strategies for your own migration journey.
-keywords: eventlet migration cases, migration testimonials, success stories, real-world examples, migration experience, practical insights, migration lessons, implementation success, developer testimonials
+description: Real-world examples and success stories from organizations and developers who have successfully migrated from Eventlet. These case studies provide practical insights, lessons learned, and proven strategies for your own migration journey.
+keywords: eventlet migration cases, success stories, real-world examples, migration experience, practical insights, migration lessons, implementation success
 og_type: article
-og_title: Case Studies and Testimonials for Eventlet Migration
+og_title: Case Studies for Eventlet Migration
 og_description: Real-world examples and success stories from organizations and developers who have successfully transitioned away from Eventlet, sharing valuable insights and experiences.
 ---
 
-<h1 class="text-4xl font-bold mb-8">Case Studies and Testimonials</h1>
+<h1 class="text-4xl font-bold mb-8">Case Studies</h1>
 
-<p class="mt-6 text-xl">Understanding how others have successfully migrated away from Eventlet can provide invaluable insights for your own migration journey. This section compiles real-world examples and firsthand experiences to help you learn from those who have already completed this transition.</p>
+<p class="mt-6 text-xl">Understanding how others have successfully migrated away from Eventlet can provide invaluable insights for your own migration journey. This section compiles real-world examples to help you learn from those who have already completed this transition.</p>
 
 <div class="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8">
-  <div class="bg-gray-800 bg-opacity-70 p-6 rounded-lg">
-    <h2 class="text-2xl font-bold mb-4">Developer Testimonials</h2>
-    <p class="text-xl">
-      Hear directly from developers who have successfully migrated their projects from Eventlet to modern alternatives. These first-person accounts provide practical insights, challenges faced, and lessons learned during the migration process.
-    </p>
-    <div class="mt-6">
-      <a href="{{ site.baseurl }}{% link guide/testimonials/index.md %}" class="inline-block bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:scale-105 transition-transform">
-        View Testimonials <i class="fas fa-arrow-right ml-2"></i>
-      </a>
-    </div>
-  </div>
-  
   <div class="bg-gray-800 bg-opacity-70 p-6 rounded-lg">
     <h2 class="text-2xl font-bold mb-4">OpenStack Project Case Studies</h2>
     <p class="text-xl">
@@ -67,7 +55,7 @@ og_description: Real-world examples and success stories from organizations and d
 <div class="mt-10 bg-indigo-900 bg-opacity-50 p-6 rounded-lg">
   <h2 class="text-2xl font-bold mb-4">Share Your Migration Story</h2>
   <p class="text-xl">
-    Have you successfully migrated a project from Eventlet? Your experience could help others navigate their own migration. Consider sharing your story as a case study or testimonial.
+    Have you successfully migrated a project from Eventlet? Your experience could help others navigate their own migration. Consider sharing your story as a case study.
   </p>
   <div class="mt-6">
     <a href="{{ site.github_repo }}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-6 rounded-lg hover:scale-105 transition-transform" target="_blank">
@@ -80,7 +68,7 @@ og_description: Real-world examples and success stories from organizations and d
     <a href="{{ site.baseurl }}{% link guide/common-problems.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
         <i class="fas fa-arrow-left mr-2"></i>Managing Common Problems
     </a>
-    <a href="{{ site.baseurl }}{% link guide/resources.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
-        Additional Resources<i class="fas fa-arrow-right ml-2"></i>
+    <a href="{{ site.baseurl }}{% link guide/testimonials.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        Testimonials<i class="fas fa-arrow-right ml-2"></i>
     </a>
 </div>

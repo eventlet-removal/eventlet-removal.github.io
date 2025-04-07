@@ -30,7 +30,7 @@ baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://removal.eventlet.org" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: jekyllrb
 github_username:  4383
-github_repo: https://github.com/4383/eventlet-removal
+github_repo: https://github.com/eventlet-removal/eventlet-removal.github.io
 
 # Build settings
 theme: minima

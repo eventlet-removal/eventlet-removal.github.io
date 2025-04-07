@@ -19,7 +19,7 @@ og_description: Meet the team behind the Eventlet Removal guide and learn about 
                 <img src="https://avatars.githubusercontent.com/u/1541489?v=4" alt="Hervé Beraud" class="rounded-lg shadow-lg w-1/4 md:w-1/2 lg:w-3/4">
             </div>
             <div class="w-full ">
-                <p class="text-xl mb-4">This website was created by <a href="https://herve.beraud.io/" class="text-cyan-400 hover:underline" target="_blank">Hervé Beraud</a>, a passionate software engineer with extensive experience in open source technologies and the Python ecosystem.</p>
+                <p class="text-xl mb-4">This website and its content was created by <a href="https://herve.beraud.io/" class="text-cyan-400 hover:underline" target="_blank">Hervé Beraud</a>, a passionate software engineer at <a href="https://www.redhat.com/" class="text-cyan-400 hover:underline" target="_blank">Red Hat</a>, with extensive experience in open source technologies and the Python ecosystem.</p>
                 <p class="text-xl mb-4">Hervé has been actively involved in the OpenStack community for many years, where he gained firsthand experience with the challenges of using Eventlet and the need for more modern asynchronous approaches.</p>
                 <p class="text-xl">You can find more of Hervé's work on <a href="https://github.com/4383" class="text-cyan-400 hover:underline" target="_blank">GitHub</a>.</p>
             </div>

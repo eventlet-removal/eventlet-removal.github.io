@@ -19,7 +19,7 @@ og_description: Read firsthand accounts from developers and projects that have s
       <img src="{{ site.baseurl }}/images/testimonials/arnaud-morin.jpg" alt="Arnaud Morin" class="w-16 h-16 rounded-full mr-4 object-cover border-2 border-cyan-400">
       <div>
         <h2 class="text-2xl font-bold">Arnaud Morin</h2>
-        <p class="text-gray-300">Cloud DevOps & Virtualization Evangelist, OpenStack Contributor</p>
+        <p class="text-gray-300">Cloud DevOps & Virtualization Evangelist at OVH, OpenStack Contributor</p>
       </div>
     </div>
     <p class="text-xl">Shares his experience migrating OpenStack Mistral from Eventlet to threading-based solutions, focusing on incremental approaches and practical challenges.</p>
@@ -53,7 +53,9 @@ og_description: Read firsthand accounts from developers and projects that have s
 
 <div class="mt-10 flex justify-between">
     <a href="{{ site.baseurl }}{% link guide/studies.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
-        <i class="fas fa-arrow-left mr-2"></i>Case Studies and Testimonials
+        <i class="fas fa-arrow-left mr-2"></i>Case Studies
     </a>
-    <div><!-- No next page --></div>
+    <a href="{{ site.baseurl }}{% link guide/resources.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        Additional Resources<i class="fas fa-arrow-right ml-2"></i>
+    </a>
 </div>
