@@ -75,6 +75,16 @@ og_description: Essential resources, tools, and reference materials for develope
             <p>An insightful article discussing the challenges and implications of mixing synchronous and asynchronous code.</p>
             <a href="https://journal.stuffwithstuff.com/2015/02/01/what-color-is-your-function/" class="text-cyan-400 hover:underline" target="_blank">Learn more</a>
         </div>
+        <div class="bg-indigo-900 p-6 rounded-lg shadow hover:shadow-xl hover:scale-110 transition-transform duration-300">
+            <h3 class="text-2xl font-bold mb-3">Cotyledon Documentation</h3>
+            <p>A framework for defining long-running services in Python, with graceful handling of system signals and worker processes.</p>
+            <a href="https://cotyledon.readthedocs.io/en/latest/index.html" class="text-cyan-400 hover:underline" target="_blank">Learn more</a>
+        </div>
+        <div class="bg-indigo-900 p-6 rounded-lg shadow hover:shadow-xl hover:scale-110 transition-transform duration-300">
+            <h3 class="text-2xl font-bold mb-3">Futurist Documentation</h3>
+            <p>A library providing abstractions for asynchronous and synchronous execution patterns, developed by the OpenStack community.</p>
+            <a href="https://docs.openstack.org/futurist/latest/" class="text-cyan-400 hover:underline" target="_blank">Learn more</a>
+        </div>
     </div>
 
     <h2 class="text-3xl font-bold mt-10">Eventlet Resources</h2>

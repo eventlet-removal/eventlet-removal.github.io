@@ -19,6 +19,9 @@ og_description: Real-world examples and success stories from organizations and d
     <p class="text-xl">
       OpenStack projects offer excellent examples of Eventlet migration at scale. Explore detailed case studies documenting the migration approach, challenges, and outcomes from various OpenStack components.
     </p>
+    <ul class="mt-4 list-disc pl-6">
+      <li><a href="{{ site.baseurl }}{% link guide/studies/octavia.md %}" class="text-cyan-400 hover:underline">Octavia: Removal of Eventlet</a></li>
+    </ul>
     <p class="mt-4 text-gray-400 italic">Case studies coming soon</p>
   </div>
 </div>
