@@ -1,7 +1,7 @@
 ---
 layout: dashboard
 title: Migration Testimonials
-permalink: /testimonials/
+permalink: /guide/testimonials/
 description: Real-world experiences and insights from developers and teams who have successfully migrated away from Eventlet to modern alternatives.
 keywords: eventlet migration, testimonials, case studies, migration experiences, eventlet removal stories, success stories
 og_type: article

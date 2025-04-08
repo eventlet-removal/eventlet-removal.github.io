@@ -1,5 +1,5 @@
 ---
-permalink: /guide/cases-studies/
+permalink: /guide/case-studies/
 title: Case Studies
 layout: dashboard
 description: Real-world examples and success stories from organizations and developers who have successfully migrated from Eventlet. These case studies provide practical insights, lessons learned, and proven strategies for your own migration journey.

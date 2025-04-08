@@ -1,7 +1,7 @@
 ---
 layout: dashboard
 title: Migration Testimony - Arnaud Morin
-permalink: /testimonials/arnaud-morin/
+permalink: /guide/testimonials/arnaud-morin/
 description: Arnaud Morin shares his experience migrating Mistral from Eventlet to native threading, providing insights and practical strategies for a successful transition.
 keywords: eventlet migration, openstack mistral, migration testimonial, eventlet removal, threading migration, practical experience
 og_type: article

@@ -1,5 +1,5 @@
 ---
-permalink: /guide/studies/octavia/
+permalink: /guide/case-studies/octavia/
 title: Case Study - Removal of Eventlet from OpenStack Octavia
 layout: dashboard
 description: Explore the systematic removal of Eventlet from OpenStack Octavia, including motivations, steps undertaken, and lessons learned.
