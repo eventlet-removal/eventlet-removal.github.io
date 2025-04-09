@@ -754,7 +754,7 @@ if __name__ == '__main__':
     <a href="{{ site.baseurl }}{% link guide/threading.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
         <i class="fas fa-arrow-left mr-2"></i>Migrating to Threading
     </a>
-    <a href="{{ site.baseurl }}{% link guide/common-problems.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
-        Managing Common Problems<i class="fas fa-arrow-right ml-2"></i>
+    <a href="{{ site.baseurl }}{% link guide/post-migration.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        Post-Migration Guidance<i class="fas fa-arrow-right ml-2"></i>
     </a>
 </div>
