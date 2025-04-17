@@ -55,7 +55,7 @@ og_description: Read firsthand accounts from developers and projects that have s
     <a href="{{ site.baseurl }}{% link guide/studies.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
         <i class="fas fa-arrow-left mr-2"></i>Case Studies
     </a>
-    <a href="{{ site.baseurl }}{% link guide/resources.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
-        Additional Resources<i class="fas fa-arrow-right ml-2"></i>
+    <a href="{{ site.baseurl }}{% link guide/openstack.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        OpenStack Resources<i class="fas fa-arrow-right ml-2"></i>
     </a>
 </div>
