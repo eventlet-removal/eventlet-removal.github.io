@@ -139,7 +139,7 @@ exclude eventlet</code></pre>
     <a href="{{ site.baseurl }}{% link guide/depth.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
         <i class="fas fa-arrow-left mr-2"></i>Managing Migration Depth
     </a>
-    <a href="{{ site.baseurl }}{% link guide/common-problems.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
-        Managing Common Problems<i class="fas fa-arrow-right ml-2"></i>
+    <a href="{{ site.baseurl }}{% link guide/debug-asyncio.md %}" class="inline-block bg-gradient-to-r from-cyan-400 to-blue-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
+        Debugging AsyncIO<i class="fas fa-arrow-right ml-2"></i>
     </a>
 </div>
