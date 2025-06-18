@@ -73,7 +73,7 @@ og_description: Create an effective timeline for your Eventlet migration project
             Propose Eventlet's retirement           :prep1, 2023-12-08, 4w
             Discuss about the terms of retirement   :prep2, 2024-01-01, 14d
             Document the migration                  :prep3, after prep2, 52w
-            Maintenance mode                        :prep4, after prep2, 166w
+            Maintenance mode                        :prep4, after prep2, 188w
             Final retirement                        :prep5, after prep4, 4w
             
             section Compatibility
@@ -86,13 +86,30 @@ og_description: Create an effective timeline for your Eventlet migration project
             Remove Support for Python 3.10          :alt7, after alt6, 4w
             
             section Support
-            Stop supporting new features            :sta1, 2024-02-01, 164w
+            Stop supporting new features            :sta1, 2024-02-01, 186w
             Deprecating not AsyncIO hubs            :sta2, 2025-04-01, 54w
             Stop supporting not AsyncIO hubs        :sta3, 2026-04-01, 51w
-            Stop fixing bugs                        :sta4, 2027-01-01, 12w
+            Stop fixing bugs                        :sta4, 2027-08-01, 12w
         </div>
     <h2 id="openstack-migration" class="mt-10 text-3xl font-bold mb-6">How Is Sequenced the abandon of Eventlet in OpenStack <a href="#openstack-migration" class="text-cyan-400 text-xl">🔗</a></h2>
     <p class="mt-10 text-xl">The Gantt diagram below aims to give you an overview of the Eventlet removal plan OpenStack and what support and next steps you should expect.</p>
+    
+    <div class="mt-6 p-4 rounded-lg futuristic-section">
+        <div class="bg-gray-900 bg-opacity-70 p-6 rounded-lg border-l-4 border-blue-400">
+            <h3 class="text-xl font-bold mb-4 text-blue-300">📅 OpenStack Release Series Timeline</h3>
+            <p class="text-sm text-gray-300 mb-4">Keep in mind the OpenStack release cadence and SLURP (Skip Level Upgrade Release Process) designations when planning your migration:</p>
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between"><span class="font-mono">2025.2</span><span class="text-gray-400">non-SLURP</span></div>
+                <div class="flex justify-between"><span class="font-mono text-yellow-300">2026.1</span><span class="text-yellow-300 font-semibold">SLURP</span></div>
+                <div class="flex justify-between"><span class="font-mono">2026.2</span><span class="text-gray-400">non-SLURP</span></div>
+                <div class="flex justify-between"><span class="font-mono text-yellow-300">2027.1</span><span class="text-yellow-300 font-semibold">SLURP</span></div>
+                <div class="flex justify-between"><span class="font-mono">2027.2</span><span class="text-gray-400">non-SLURP</span></div>
+                <div class="flex justify-between"><span class="font-mono text-yellow-300">2028.1</span><span class="text-yellow-300 font-semibold">SLURP</span></div>
+            </div>
+            <p class="text-xs text-gray-400 mt-4">📚 Learn more: <a href="https://docs.openstack.org/project-team-guide/release-cadence-adjustment.html" class="text-cyan-400 hover:underline" target="_blank">SLURP Policy</a> | <a href="https://releases.openstack.org/" class="text-cyan-400 hover:underline" target="_blank">Release Agenda</a></p>
+        </div>
+    </div>
+    
     <div class="mt-10 mermaid">
         %%{init: {'theme': 'dark', 'gantt': {'titleColor': '#ffffff', 'sectionColor': '#ffffff', 'taskColor': '#ffffff', 'taskTextColor': '#ffffff'}}}%%
 
@@ -108,11 +125,11 @@ og_description: Create an effective timeline for your Eventlet migration project
             Select the community goal               :prep3, after prep2, 15w
             Start officially the migration          :prep4, after prep3, 2w
             Prepare Oslo (deprecate/ new drivers)   :prep5, after prep4, 24w
-            Accelerate the migration of services    :prep6, 2025-04-04, 52w
-            Remove deprecated parts of services     :prep7, 2026-04-01, 27w
-            Cleans up Eventlet from services        :prep8, 2026-10-01, 12w
-            Remove deprecated parts of libraries    :prep9, after prep8, 12w
-            Drop Eventlet from requirements         :prep10, after prep9, 2w
+            Accelerate the migration of services    :prep6, 2025-04-04, 78w
+            Remove deprecated parts of services (if possible)     :prep7, 2026-04-01, 52w
+            Cleans up Eventlet from services (if possible)        :prep8, 2026-10-01, 26w
+            Remove deprecated parts of libraries    :prep9, after prep8, 16w
+            Drop Eventlet from requirements         :prep10, after prep9, 12w
         </div>
     <div class="mt-10 flex justify-between">
         <a href="{{ site.baseurl }}{% link guide/preparing.md %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded hover:scale-105 transition-transform">
