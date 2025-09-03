@@ -565,7 +565,7 @@ pool.resize(4)
 # Wait for all tasks to complete
 pool.join()</code></pre>
         <p class="text-xl">In this example, ResizableThreadPool allows you to dynamically resize the pool by adding or removing worker threads. You can use the spawn method to add tasks to the pool and the resize method to change the number of threads.</p>
-        <p class="text-xl">Please find out <a href="https://review.opendev.org/c/openstack/neutron/+/945566" class="text-cyan-400" target="_blank">this living example</a> of the implementation of this pattern.</p>
+        <p class="text-xl">Please find out <a href="https://docs.openstack.org/futurist/latest/reference/index.html#futurist.DynamicThreadPoolExecutor" class="text-cyan-400" target="_blank">this living implementation</a> of this pattern into the futurist library.</p>
         </div>
     </div>
 
