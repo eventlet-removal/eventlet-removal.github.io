@@ -62,7 +62,7 @@ og_description: Track OpenStack's community-wide effort to migrate away from Eve
     <ul class="mt-4 list-disc pl-6">
       <li><a href="{{ site.baseurl }}{% link guide/studies/octavia.md %}" class="text-cyan-400 hover:underline">Octavia: A Complete Migration Case Study</a></li>
       <li><a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/neutron" class="text-cyan-400 hover:underline" target="_blank">Neutron: Eventlet Removal Patches</a></li>
-      <li><a href="https://review.opendev.org/c/openstack/oslo.service/+/945720" class="text-cyan-400 hover:underline" target="_blank">Oslo.service: New Threading Backend</a></li>
+      <li><a href="https://docs.openstack.org/oslo.service/latest/user/backend.html" class="text-cyan-400 hover:underline" target="_blank">Oslo.service: New Threading Backend</a></li>
       <li><a href="https://etherpad.opendev.org/p/nova-eventlet-removal" class="text-cyan-400 hover:underline" target="_blank">Nova: Eventlet Removal Progress Tracking</a></li>
       <li><a href="https://gibizer.github.io/categories/eventlet/" class="text-cyan-400 hover:underline" target="_blank">Nova: Balazs Gibizer's Blog on Eventlet Migration</a> - Detailed articles tracking Nova's progress</li>
     </ul>
