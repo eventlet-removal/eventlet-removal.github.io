@@ -73,7 +73,7 @@ og_description: Track OpenStack's community-wide effort to migrate away from Eve
 <div class="mt-10 bg-indigo-900 bg-opacity-50 p-6 rounded-lg">
   <h2 id="migration-status" class="text-2xl font-bold mb-4">Current Migration Status Summary <a href="#migration-status" class="text-cyan-400 text-xl">🔗</a></h2>
   <p class="text-xl mb-6">
-    The progress of Eventlet removal varies across OpenStack projects. Here's a high-level overview as of April 2025:
+    The progress of Eventlet removal varies across OpenStack projects. Here's a high-level overview as of September 2025:
   </p>
   
   <div class="overflow-x-auto">
