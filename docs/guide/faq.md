@@ -150,7 +150,16 @@ og_description: Comprehensive answers to the most common questions about migrati
           <a href="https://github.com/openstack/octavia/commit/9027154a5a56a3cd23150415c78fe50af2124a2e" class="text-cyan-400 hover:underline">Octavia</a> completely removed its dependency on Eventlet since 2017.
         </li>
         <li class="mt-2">
-          <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/mistral" class="text-cyan-400 hover:underline">Mistral</a> has completed most of its migration.
+          <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/mistral" class="text-cyan-400 hover:underline">Mistral</a> has completed its migration.
+        </li>
+        <li class="mt-2">
+          <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/ironic" class="text-cyan-400 hover:underline">Ironic</a> has completed its migration.
+        </li>
+        <li class="mt-2">
+          <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/barbican" class="text-cyan-400 hover:underline">Barbican</a> has completed its migration.
+        </li>
+        <li class="mt-2">
+          <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/heat" class="text-cyan-400 hover:underline">Heat</a> has completed its migration.
         </li>
       </ul>
       <p class="mt-4 text-xl">
