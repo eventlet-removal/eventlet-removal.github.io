@@ -90,76 +90,108 @@ og_description: Track OpenStack's community-wide effort to migrate away from Eve
         <tr>
           <td class="py-2 px-4 border-b border-gray-700">Octavia</td>
           <td class="py-2 px-4 border-b border-gray-700"><span class="bg-green-800 rounded px-2 py-1">Completed</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Complete migration since 2017</td>
+          <td class="py-2 px-4 border-b border-gray-700">Migration completed since 2017
+            <a href="https://review.opendev.org/q/eventlet+project:openstack/octavia" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
         </tr>
         <tr>
           <td class="py-2 px-4 border-b border-gray-700">Mistral</td>
-          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-blue-800 rounded px-2 py-1">Nearly Complete</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Comprehensive approach with minimal incremental steps</td>
+          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-green-800 rounded px-2 py-1">Completed</span></td>
+          <td class="py-2 px-4 border-b border-gray-700">Migration completed since September 2025.
+            <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/mistral" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
         </tr>
         <tr>
+          <td class="py-2 px-4 border-b border-gray-700">Ironic</td>
+          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-green-800 rounded px-2 py-1">Completed</span></td>
+          <td class="py-2 px-4 border-b border-gray-700">Migration completed since August 2025.
+            <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/ironic" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="py-2 px-4 border-b border-gray-700">Barbican</td>
+          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-green-800 rounded px-2 py-1">Completed</span></td>
+          <td class="py-2 px-4 border-b border-gray-700">Migration completed since August 2025.
+            <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/barbican" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="py-2 px-4 border-b border-gray-700">Heat</td>
+          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-green-800 rounded px-2 py-1">Completed</span></td>
+          <td class="py-2 px-4 border-b border-gray-700">Migration completed since July 2025.
+            <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/heat" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
+        </tr>
+        <!-- Projects In Progress -->
+        <tr>
           <td class="py-2 px-4 border-b border-gray-700">Neutron</td>
-          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-blue-800 rounded px-2 py-1">Significant Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Dual-mode support during transition</td>
+          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
+          <td class="py-2 px-4 border-b border-gray-700">Dual-mode support during transition
+            <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/neutron" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
         </tr>
         <tr>
           <td class="py-2 px-4 border-b border-gray-700">Oslo Libraries</td>
-          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-blue-800 rounded px-2 py-1">Significant Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Deprecated Eventlet features, oslo.db supports asyncio, developing threading backend for oslo.service</td>
+          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
+          <td class="py-2 px-4 border-b border-gray-700">Deprecated Eventlet features, oslo.db supports asyncio, oslo.service's threading backend is implemented
+            <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+oslo" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
         </tr>
         <tr>
           <td class="py-2 px-4 border-b border-gray-700">Glance</td>
-          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-blue-800 rounded px-2 py-1">Partial</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Core works without Eventlet; some optional features still depend on it</td>
+          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
+          <td class="py-2 px-4 border-b border-gray-700">Core works without Eventlet; some optional features still depend on it
+            <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/glance" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
         </tr>
-        
-        <!-- Projects In Progress -->
         <tr>
           <td class="py-2 px-4 border-b border-gray-700">Nova</td>
           <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Service-by-service approach with dual-mode support</td>
+          <td class="py-2 px-4 border-b border-gray-700">Service-by-service approach with dual-mode support
+            <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/nova" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
         </tr>
         <tr>
           <td class="py-2 px-4 border-b border-gray-700">Cinder</td>
           <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Starting with Volume Manager, then other components</td>
+          <td class="py-2 px-4 border-b border-gray-700">Starting with Volume Manager, then other components
+            <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/cinder" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
         </tr>
         <tr>
           <td class="py-2 px-4 border-b border-gray-700">Manila</td>
           <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Multi-cycle approach, targeting completion in Guppy cycle</td>
-        </tr>
-        <tr>
-          <td class="py-2 px-4 border-b border-gray-700">Heat</td>
-          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Will use new oslo.service implementation, discontinuing WSGI server</td>
-        </tr>
-        <tr>
-          <td class="py-2 px-4 border-b border-gray-700">Ironic</td>
-          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Component-by-component approach, challenges with IPA</td>
+          <td class="py-2 px-4 border-b border-gray-700">Multi-cycle approach, targeting completion in Guppy cycle
+            <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/manila" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
         </tr>
         <tr>
           <td class="py-2 px-4 border-b border-gray-700">Designate</td>
           <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Top priority for Flamingo cycle</td>
+          <td class="py-2 px-4 border-b border-gray-700">Top priority for Flamingo cycle
+            <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/designate" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="py-2 px-4 border-b border-gray-700">Watcher</td>
+          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
+          <td class="py-2 px-4 border-b border-gray-700">Support running under threading mode
+            <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/watcher" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="py-2 px-4 border-b border-gray-700">Swift</td>
+          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
+          <td class="py-2 px-4 border-b border-gray-700">"Canary node" approach starting with proxies
+            <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/swift" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
         </tr>
         
         <!-- Projects in Planning Phase -->
         <tr>
-          <td class="py-2 px-4 border-b border-gray-700">Swift</td>
-          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-yellow-800 rounded px-2 py-1">Planning</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">"Canary node" approach starting with proxies</td>
-        </tr>
-        <tr>
           <td class="py-2 px-4 border-b border-gray-700">Blazar</td>
           <td class="py-2 px-4 border-b border-gray-700"><span class="bg-yellow-800 rounded px-2 py-1">Planning</span></td>
           <td class="py-2 px-4 border-b border-gray-700">Evaluating alternatives to Eventlet WSGI</td>
-        </tr>
-        <tr>
-          <td class="py-2 px-4 border-b border-gray-700">Watcher</td>
-          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-yellow-800 rounded px-2 py-1">Planning</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Beginning examination of Eventlet usage</td>
         </tr>
       </tbody>
     </table>
