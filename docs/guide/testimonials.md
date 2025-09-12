@@ -53,6 +53,19 @@ og_description: Read firsthand accounts from developers and projects that have s
       Read more <i class="fas fa-arrow-right ml-2"></i>
     </div>
   </a>
+  <a href="{{ site.baseurl }}{% link guide/testimonials/jay-faulkner.md %}" class="block bg-gray-800 bg-opacity-70 p-6 rounded-lg hover:bg-gray-700 hover:bg-opacity-70 transition-all hover:scale-105">
+    <div class="flex items-center mb-4">
+      <img src="{{ site.baseurl }}/images/testimonials/jay-faulkner.jpg" alt="Jay Faulkner" class="w-16 h-16 rounded-full mr-4 object-cover border-2 border-cyan-400">
+      <div>
+        <h2 class="text-2xl font-bold">Jay Faulkner</h2>
+        <p class="text-gray-300">Open Source Developer at GR-OSS, OpenStack Contributor & Former Technical Commitee Member</p>
+      </div>
+    </div>
+    <p class="text-xl">Shares his experience of the migration from his OpenStack technical commitee member and about migrating OpenStack Ironic from Eventlet to threading-based solutions.</p>
+    <div class="mt-4 text-cyan-400 flex items-center">
+      Read more <i class="fas fa-arrow-right ml-2"></i>
+    </div>
+  </a>
   
   <!-- Placeholder for future testimonials -->
   <div class="bg-gray-800 bg-opacity-40 p-6 rounded-lg border border-dashed border-gray-600 flex items-center justify-center">
