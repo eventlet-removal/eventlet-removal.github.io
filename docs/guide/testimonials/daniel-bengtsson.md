@@ -16,7 +16,7 @@ og_description: Learn from Daniel Bengtsson's firsthand experience migrating Ope
     <img src="{{ site.baseurl }}/images/testimonials/daniel-bengtsson.png" alt="Daniel Bengtsson" class="w-24 h-24 rounded-full mr-6 object-cover border-2 border-cyan-400">
     <div>
       <h2 class="text-2xl font-bold">Daniel Bengtsson</h2>
-      <!--<a href="https://www.arnaudmorin.fr/" target="_blank" class="text-cyan-400">https://www.arnaudmorin.fr/</a>-->
+      <a href="https://www.linkedin.com/in/damanius/" target="_blank" class="text-cyan-400">https://www.linkedin.com/in/damanius/</a>
       <p class="text-xl text-gray-300">Software Engineer at <a href="https://redhat.com/" target="_blank" class="text-cyan-400">Red Hat</a>, OpenStack Contributor</p>
       <p class="text-gray-400 mt-1">Working on OpenStack Oslo Libraries</p>
     </div>
