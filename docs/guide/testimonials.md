@@ -66,6 +66,19 @@ og_description: Read firsthand accounts from developers and projects that have s
       Read more <i class="fas fa-arrow-right ml-2"></i>
     </div>
   </a>
+  <a href="{{ site.baseurl }}{% link guide/testimonials/dmitry-tantsur.md %}" class="block bg-gray-800 bg-opacity-70 p-6 rounded-lg hover:bg-gray-700 hover:bg-opacity-70 transition-all hover:scale-105">
+    <div class="flex items-center mb-4">
+      <img src="{{ site.baseurl }}/images/testimonials/dmitry-tantsur.jpg" alt="Dmitry Tantsur" class="w-16 h-16 rounded-full mr-4 object-cover border-2 border-cyan-400">
+      <div>
+        <h2 class="text-2xl font-bold">Dmitry Tantsur</h2>
+        <p class="text-gray-300">Senior Software Engineer at Red Hat, OpenStack contributor</p>
+      </div>
+    </div>
+    <p class="text-xl">Dmitry Tantsur led Ironic’s migration away from Eventlet, replacing deeply-integrated eventlet usage (green threads, monkey-patching, WSGI, etc.) with a threaded backend using Futurist and other alternatives, doing so incrementally and pragmatically to improve stability, avoid Eventlet-specific bugs, and reduce long-term risk.</p>
+    <div class="mt-4 text-cyan-400 flex items-center">
+      Read more <i class="fas fa-arrow-right ml-2"></i>
+    </div>
+  </a>
   
   <!-- Placeholder for future testimonials -->
   <div class="bg-gray-800 bg-opacity-40 p-6 rounded-lg border border-dashed border-gray-600 flex items-center justify-center">
