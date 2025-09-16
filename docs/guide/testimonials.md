@@ -35,7 +35,7 @@ og_description: Read firsthand accounts from developers and projects that have s
         <p class="text-gray-300">Senior Principal Software Engineer at Red Hat, Chair of the OpenStack Governing Board</p>
       </div>
     </div>
-    <p class="text-xl">Shares her experience migrating OpenStack Ironic from Eventlet to threading-based solutions, focusing on incremental approaches and practical challenges.</p>
+    <p class="text-xl">Julia Kreger — Senior Principal Software Engineer at Red Hat and Chair of the OpenStack Governing Board — played a key role in guiding the Ironic community’s migration away from Eventlet, improving stability, scalability, performance, and long-term maintainability through collaboration and incremental change.</p>
     <div class="mt-4 text-cyan-400 flex items-center">
       Read more <i class="fas fa-arrow-right ml-2"></i>
     </div>
@@ -48,7 +48,7 @@ og_description: Read firsthand accounts from developers and projects that have s
         <p class="text-gray-300">Software Engineer at Red Hat, OpenStack Contributor</p>
       </div>
     </div>
-    <p class="text-xl">Shares her experience migrating OpenStack oslo.service from Eventlet to threading-based solutions, focusing on incremental approaches and practical challenges.</p>
+    <p class="text-xl">Daniel Bengtsson — a software engineer at Red Hat working on Oslo Libraries — led the overhaul of oslo.service, deeply replacing its Eventlet-based backend with a threading + futurist + cotyledon solution while preserving API compatibility, improving stability, maintainability, and Python 3.12+ support.</p>
     <div class="mt-4 text-cyan-400 flex items-center">
       Read more <i class="fas fa-arrow-right ml-2"></i>
     </div>
@@ -61,7 +61,7 @@ og_description: Read firsthand accounts from developers and projects that have s
         <p class="text-gray-300">Open Source Developer at GR-OSS, OpenStack Contributor & Former Technical Commitee Member</p>
       </div>
     </div>
-    <p class="text-xl">Shares his experience of the migration from his OpenStack technical commitee member and about migrating OpenStack Ironic from Eventlet to threading-based solutions.</p>
+    <p class="text-xl">As an OpenStack Technical Committee (TC) member, Jay Faulkner guided the Ironic community through the migration away from Eventlet, ensuring alignment, coordination, and long-term stability while delivering performance gains and reduced technical risk.</p>
     <div class="mt-4 text-cyan-400 flex items-center">
       Read more <i class="fas fa-arrow-right ml-2"></i>
     </div>
