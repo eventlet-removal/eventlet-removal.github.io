@@ -18,6 +18,7 @@ pub enum UsageType {
     Executor,         // executor='eventlet'
     Sleep,            // eventlet.sleep()
     Pool,             // eventlet.GreenPool, eventlet.pool
+    Deprecation,      // deprecation warnings, removal notices
     Other(String),    // Other usage patterns
 }
 
@@ -25,6 +26,7 @@ impl UsageType {
     /// Categorize usage by complexity/migration difficulty
     pub fn migration_complexity(&self) -> u8 {
         match self {
+            UsageType::Deprecation => 0, // Deprecation is actually good - no complexity
             UsageType::Import => 1,
             UsageType::Executor => 2,
             UsageType::Sleep => 3,
@@ -78,8 +80,9 @@ pub struct ComparisonResult {
 pub enum MigrationStatus {
     FullyMigrated,    // 0 usages remaining
     InProgress,       // Some reduction in usages
+    Deprecating,      // Adding deprecation warnings (positive step)
     Stalled,          // No change in usages
-    Regressed,        // Increased usages
+    Regressed,        // Increased usages (but not deprecation)
     New,              // New project with eventlet
 }
 
@@ -92,6 +95,7 @@ pub struct AnalysisSummary {
     pub total_projects: usize,
     pub fully_migrated: usize,
     pub in_progress: usize,
+    pub deprecating: usize,
     pub stalled: usize,
     pub regressed: usize,
     pub new_projects: usize,
@@ -111,6 +115,7 @@ pub struct AnalysisConfig {
 impl Default for AnalysisConfig {
     fn default() -> Self {
         let mut complexity_weights = HashMap::new();
+        complexity_weights.insert(UsageType::Deprecation, 0.0); // Deprecation is positive
         complexity_weights.insert(UsageType::Import, 1.0);
         complexity_weights.insert(UsageType::Executor, 2.0);
         complexity_weights.insert(UsageType::Sleep, 3.0);

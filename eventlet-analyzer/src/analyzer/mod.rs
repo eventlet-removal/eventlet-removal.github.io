@@ -133,6 +133,8 @@ pub fn compare_snapshots(
                         baseline_usages,
                         current_usages,
                         usages_removed,
+                        &baseline.usage_breakdown,
+                        &current.usage_breakdown,
                     );
 
                     let complexity_change = current.complexity_score - baseline.complexity_score;
@@ -177,11 +179,13 @@ pub fn compare_snapshots(
         .collect()
 }
 
-/// Determine migration status based on usage changes
+/// Determine migration status based on usage changes and usage patterns
 fn determine_migration_status(
     _baseline_usages: i32,
     current_usages: i32,
     usages_removed: i32,
+    baseline_breakdown: &HashMap<UsageType, usize>,
+    current_breakdown: &HashMap<UsageType, usize>,
 ) -> MigrationStatus {
     if current_usages == 0 {
         MigrationStatus::FullyMigrated
@@ -190,6 +194,21 @@ fn determine_migration_status(
     } else if usages_removed == 0 {
         MigrationStatus::Stalled
     } else {
+        // usages_removed < 0 (increased usages)
+        // Check if the increase is primarily due to deprecation warnings
+        let baseline_deprecations = baseline_breakdown.get(&UsageType::Deprecation).unwrap_or(&0);
+        let current_deprecations = current_breakdown.get(&UsageType::Deprecation).unwrap_or(&0);
+
+        if current_deprecations > baseline_deprecations {
+            let deprecation_increase = current_deprecations - baseline_deprecations;
+            let total_increase = (-usages_removed) as usize; // Convert negative to positive
+
+            // If most of the increase (>= 60%) is due to deprecations, classify as Deprecating
+            if deprecation_increase as f64 / total_increase as f64 >= 0.6 {
+                return MigrationStatus::Deprecating;
+            }
+        }
+
         MigrationStatus::Regressed
     }
 }
@@ -215,6 +234,11 @@ pub fn generate_analysis_summary(
     let stalled = comparisons
         .iter()
         .filter(|c| c.migration_status == MigrationStatus::Stalled)
+        .count();
+
+    let deprecating = comparisons
+        .iter()
+        .filter(|c| c.migration_status == MigrationStatus::Deprecating)
         .count();
 
     let regressed = comparisons
@@ -250,6 +274,7 @@ pub fn generate_analysis_summary(
         total_projects,
         fully_migrated,
         in_progress,
+        deprecating,
         stalled,
         regressed,
         new_projects,
@@ -325,21 +350,36 @@ mod tests {
 
     #[test]
     fn test_determine_migration_status() {
+        let empty_breakdown = HashMap::new();
+        let mut baseline_breakdown = HashMap::new();
+        let mut current_breakdown = HashMap::new();
+
+        // Test basic cases with empty breakdowns
         assert_eq!(
-            determine_migration_status(10, 0, 10),
+            determine_migration_status(10, 0, 10, &empty_breakdown, &empty_breakdown),
             MigrationStatus::FullyMigrated
         );
         assert_eq!(
-            determine_migration_status(10, 5, 5),
+            determine_migration_status(10, 5, 5, &empty_breakdown, &empty_breakdown),
             MigrationStatus::InProgress
         );
         assert_eq!(
-            determine_migration_status(10, 10, 0),
+            determine_migration_status(10, 10, 0, &empty_breakdown, &empty_breakdown),
             MigrationStatus::Stalled
         );
         assert_eq!(
-            determine_migration_status(10, 15, -5),
+            determine_migration_status(10, 15, -5, &empty_breakdown, &empty_breakdown),
             MigrationStatus::Regressed
+        );
+
+        // Test deprecating case
+        baseline_breakdown.insert(UsageType::Deprecation, 0);
+        current_breakdown.insert(UsageType::Deprecation, 4);
+        current_breakdown.insert(UsageType::Import, 1);
+
+        assert_eq!(
+            determine_migration_status(10, 15, -5, &baseline_breakdown, &current_breakdown),
+            MigrationStatus::Deprecating
         );
     }
 }

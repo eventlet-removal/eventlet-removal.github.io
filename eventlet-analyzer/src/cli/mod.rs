@@ -33,6 +33,7 @@ pub fn display_summary_table(summary: &AnalysisSummary) {
     let total = summary.total_projects as f64;
     println!("✅ Fully Migrated: {} ({:.1}%)", format!("{:>3}", summary.fully_migrated).green(), (summary.fully_migrated as f64 / total * 100.0));
     println!("🔄 In Progress:    {} ({:.1}%)", format!("{:>3}", summary.in_progress).yellow(), (summary.in_progress as f64 / total * 100.0));
+    println!("📅 Deprecating:    {} ({:.1}%)", format!("{:>3}", summary.deprecating).bright_yellow(), (summary.deprecating as f64 / total * 100.0));
     println!("⏸️  Stalled:        {} ({:.1}%)", format!("{:>3}", summary.stalled).red(), (summary.stalled as f64 / total * 100.0));
     println!("📈 Regressed:      {} ({:.1}%)", format!("{:>3}", summary.regressed).purple(), (summary.regressed as f64 / total * 100.0));
     println!("🆕 New Projects:   {} ({:.1}%)", format!("{:>3}", summary.new_projects).cyan(), (summary.new_projects as f64 / total * 100.0));
@@ -136,6 +137,7 @@ fn format_migration_status(status: &MigrationStatus) -> String {
     match status {
         MigrationStatus::FullyMigrated => "✅ Migrated".green().to_string(),
         MigrationStatus::InProgress => "🔄 Progress".yellow().to_string(),
+        MigrationStatus::Deprecating => "📅 Deprecating".bright_yellow().to_string(),
         MigrationStatus::Stalled => "⏸️ Stalled".red().to_string(),
         MigrationStatus::Regressed => "📈 Regressed".purple().to_string(),
         MigrationStatus::New => "🆕 New".cyan().to_string(),
@@ -148,6 +150,7 @@ fn format_migration_status_plain(status: &MigrationStatus) -> String {
     match status {
         MigrationStatus::FullyMigrated => format!("{:<12}", "✅ Migrated"),
         MigrationStatus::InProgress => format!("{:<12}", "🔄 Progress"),
+        MigrationStatus::Deprecating => format!("{:<12}", "📅 Deprecating"),
         MigrationStatus::Stalled => format!("{:<12}", "⏸️ Stalled"),
         MigrationStatus::Regressed => format!("{:<12}", "📈 Regressed"),
         MigrationStatus::New => format!("{:<12}", "🆕 New"),
@@ -270,13 +273,22 @@ pub fn display_insights(summary: &AnalysisSummary) {
     println!("\n{}", "💡 Insights & Recommendations".bold().blue());
 
     // Migration velocity
-    let active_projects = summary.in_progress + summary.fully_migrated;
+    let active_projects = summary.in_progress + summary.fully_migrated + summary.deprecating;
     if active_projects > 0 {
         println!(
             "• {}/{} projects ({:.1}%) have made progress",
             active_projects,
             summary.total_projects,
             (active_projects as f64 / summary.total_projects as f64) * 100.0
+        );
+    }
+
+    // Highlight deprecation efforts
+    if summary.deprecating > 0 {
+        println!(
+            "• {} {} projects are adding deprecation warnings - positive step toward migration!",
+            "📅".bright_yellow(),
+            summary.deprecating
         );
     }
 

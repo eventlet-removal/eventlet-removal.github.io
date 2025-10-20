@@ -53,6 +53,12 @@ lazy_static! {
             Regex::new(r"eventlet\.(GreenPool|pool)").unwrap()
         );
 
+        // Deprecation patterns - these should be checked first as they indicate positive progress
+        patterns.insert(
+            UsageType::Deprecation,
+            Regex::new(r"(?i)(deprecat|remov|warn|obsolet|discontinu).*eventlet|eventlet.*(deprecat|remov|warn|obsolet|discontinu)").unwrap()
+        );
+
         patterns
     };
 
@@ -123,8 +129,16 @@ fn parse_beagle_line(line: &str) -> Result<EventletUsage> {
 
 /// Determine the type of eventlet usage from code snippet
 fn determine_usage_type(code_snippet: &str) -> UsageType {
-    for (usage_type, pattern) in USAGE_PATTERNS.iter() {
+    // Check for deprecation patterns first - these have highest priority
+    if let Some(pattern) = USAGE_PATTERNS.get(&UsageType::Deprecation) {
         if pattern.is_match(code_snippet) {
+            return UsageType::Deprecation;
+        }
+    }
+
+    // Then check for other specific patterns
+    for (usage_type, pattern) in USAGE_PATTERNS.iter() {
+        if usage_type != &UsageType::Deprecation && pattern.is_match(code_snippet) {
             return usage_type.clone();
         }
     }
@@ -223,7 +237,7 @@ mod tests {
 
     #[test]
     fn test_parse_beagle_line() {
-        let line = "https://github.com/openstack/aodh/blob/master/aodh/service.py#45 : import eventlet";
+        let line = "https://github.com/openstack/aodh/blob/master/aodh/service.py#n45 : import eventlet";
         let usage = parse_beagle_line(line).unwrap();
 
         assert_eq!(usage.project_name, "aodh");
@@ -238,5 +252,12 @@ mod tests {
         assert_eq!(determine_usage_type("eventlet.monkey_patch()"), UsageType::MonkeyPatch);
         assert_eq!(determine_usage_type("eventlet.spawn(func)"), UsageType::Spawn);
         assert_eq!(determine_usage_type("executor='eventlet'"), UsageType::Executor);
+
+        // Test deprecation patterns
+        assert_eq!(determine_usage_type("eventletutils module is deprecated and will be removed."), UsageType::Deprecation);
+        assert_eq!(determine_usage_type("deprecate eventlet support"), UsageType::Deprecation);
+        assert_eq!(determine_usage_type("Remove eventlet from Aodh"), UsageType::Deprecation);
+        assert_eq!(determine_usage_type("eventlet executor has been deprecated"), UsageType::Deprecation);
+        assert_eq!(determine_usage_type("warn about eventlet usage"), UsageType::Deprecation);
     }
 }
