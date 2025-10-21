@@ -1,0 +1,154 @@
+🔄 Comparing eventlet usage between files...
+Analyzed 1782 → 1497 usages across 99 projects in 0.48s (excluding docs/release notes)
+
+📊 OpenStack Eventlet Migration Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📈 Overall Progress
+Analysis Date: 2025-10-21 08:12 UTC
+Baseline File: ../stats/origin.txt
+Current File:  ../stats/october-2025.txt
+
+Overall Progress: ███░░░░░░░░░░░░░░░░░ 16.0% (285/1782 usages removed)
+
+📋 Project Status Breakdown
+✅ Fully Migrated:  19 (19.2%)
+🔄 In Progress:     15 (15.2%)
+📅 Deprecating:      3 (3.0%)
+⏸️  Stalled:         45 (45.5%)
+📈 Regressed:       14 (14.1%)
+🆕 New Projects:     3 (3.0%)
+
+📋 Project Details
+╭────────────────────────────────┬──────────┬─────────┬─────────┬──────────┬────────────────╮
+│ [44mProject[49m                        │ [44mBaseline[49m │ [44mCurrent[49m │ [44mRemoved[49m │ [44mProgress[49m │     [44mStatus[49m     │
+├────────────────────────────────┼──────────┼─────────┼─────────┼──────────┼────────────────┤
+│ neutron                        │      164 │      33 │    +131 │    79.9% │ 🔄 Progress    │
+│ heat                           │       63 │       0 │     +63 │   100.0% │ ✅ Migrated    │
+│ nova                           │       97 │      58 │     +39 │    40.2% │ 🔄 Progress    │
+│ mistral                        │       36 │       1 │     +35 │    97.2% │ 🔄 Progress    │
+│ ironic                         │       28 │      12 │     +16 │    57.1% │ 🔄 Progress    │
+│ glance                         │       62 │      51 │     +11 │    17.7% │ 🔄 Progress    │
+│ barbican                       │        9 │       0 │      +9 │   100.0% │ ✅ Migrated    │
+│ ironic-inspector               │        8 │       0 │      +8 │   100.0% │ ✅ Migrated    │
+│ networking-generic-switch      │        7 │       0 │      +7 │   100.0% │ ✅ Migrated    │
+│ neutron-vpnaas                 │        6 │       0 │      +6 │   100.0% │ ✅ Migrated    │
+│ oslo.concurrency               │       17 │      11 │      +6 │    35.3% │ 🔄 Progress    │
+│ trove                          │       34 │      28 │      +6 │    17.6% │ 🔄 Progress    │
+│ oslo.messaging                 │       65 │      60 │      +5 │     7.7% │ 🔄 Progress    │
+│ neutron-tempest-plugin         │        5 │       0 │      +5 │   100.0% │ ✅ Migrated    │
+│ rpm-packaging                  │       59 │      54 │      +5 │     8.5% │ 🔄 Progress    │
+│ ironic-python-agent            │        6 │       1 │      +5 │    83.3% │ 🔄 Progress    │
+│ monasca-agent                  │        5 │       0 │      +5 │   100.0% │ ✅ Migrated    │
+│ mistral-lib                    │        4 │       0 │      +4 │   100.0% │ ✅ Migrated    │
+│ puppet-barbican                │        4 │       0 │      +4 │   100.0% │ ✅ Migrated    │
+│ puppet-neutron                 │        4 │       0 │      +4 │   100.0% │ ✅ Migrated    │
+│ mistral-extra                  │        3 │       0 │      +3 │   100.0% │ ✅ Migrated    │
+│ monasca-events-api             │        3 │       0 │      +3 │   100.0% │ ✅ Migrated    │
+│ designate                      │       19 │      16 │      +3 │    15.8% │ 🔄 Progress    │
+│ networking-baremetal           │        3 │       0 │      +3 │   100.0% │ ✅ Migrated    │
+│ glance_store                   │       12 │       9 │      +3 │    25.0% │ 🔄 Progress    │
+│ monasca-api                    │        3 │       0 │      +3 │   100.0% │ ✅ Migrated    │
+│ python-cinderclient            │        1 │       0 │      +1 │   100.0% │ ✅ Migrated    │
+│ heat-templates                 │        1 │       0 │      +1 │   100.0% │ ✅ Migrated    │
+│ ceilometer                     │        1 │       0 │      +1 │   100.0% │ ✅ Migrated    │
+│ manila                         │       24 │      23 │      +1 │     4.2% │ 🔄 Progress    │
+│ python-mistralclient           │        1 │       0 │      +1 │   100.0% │ ✅ Migrated    │
+│ python-manilaclient            │        1 │       0 │      +1 │   100.0% │ ✅ Migrated    │
+│ oslo.db                        │        3 │       2 │      +1 │    33.3% │ 🔄 Progress    │
+│ os-ken                         │       33 │      32 │      +1 │     3.0% │ 🔄 Progress    │
+│ python-swiftclient             │        1 │       1 │       0 │     0.0% │  ⏸️ Stalled    │
+│ python-keystoneclient          │        5 │       5 │       0 │     0.0% │  ⏸️ Stalled    │
+│ neutron-fwaas                  │        4 │       4 │       0 │     0.0% │  ⏸️ Stalled    │
+│ os-brick                       │        2 │       2 │       0 │     0.0% │  ⏸️ Stalled    │
+│ openstack-ansible-ops          │       10 │      10 │       0 │     0.0% │  ⏸️ Stalled    │
+│ puppet-keystone                │        1 │       1 │       0 │     0.0% │  ⏸️ Stalled    │
+│ zun                            │       12 │      12 │       0 │     0.0% │  ⏸️ Stalled    │
+│ tacker                         │       85 │      85 │       0 │     0.0% │  ⏸️ Stalled    │
+│ cinder                         │      155 │     155 │       0 │     0.0% │  ⏸️ Stalled    │
+│ governance                     │        4 │       4 │       0 │     0.0% │  ⏸️ Stalled    │
+│ blazar                         │       13 │      13 │       0 │     0.0% │  ⏸️ Stalled    │
+│ taskflow                       │       24 │      24 │       0 │     0.0% │  ⏸️ Stalled    │
+│ octavia-tempest-plugin         │        7 │       7 │       0 │     0.0% │  ⏸️ Stalled    │
+│ kolla                          │        1 │       1 │       0 │     0.0% │  ⏸️ Stalled    │
+│ charm-manila                   │        2 │       2 │       0 │     0.0% │  ⏸️ Stalled    │
+│ swift-bench                    │       13 │      13 │       0 │     0.0% │  ⏸️ Stalled    │
+│ magnum                         │        5 │       5 │       0 │     0.0% │  ⏸️ Stalled    │
+│ vitrage                        │        1 │       1 │       0 │     0.0% │  ⏸️ Stalled    │
+│ python-octaviaclient           │        6 │       6 │       0 │     0.0% │  ⏸️ Stalled    │
+│ python-troveclient             │        1 │       1 │       0 │     0.0% │  ⏸️ Stalled    │
+│ venus                          │       22 │      22 │       0 │     0.0% │  ⏸️ Stalled    │
+│ oslo.rootwrap                  │        6 │       6 │       0 │     0.0% │  ⏸️ Stalled    │
+│ python-glanceclient            │        3 │       3 │       0 │     0.0% │  ⏸️ Stalled    │
+│ ovsdbapp                       │        7 │       7 │       0 │     0.0% │  ⏸️ Stalled    │
+│ keystonemiddleware             │        5 │       5 │       0 │     0.0% │  ⏸️ Stalled    │
+│ python-ironicclient            │        4 │       4 │       0 │     0.0% │  ⏸️ Stalled    │
+│ futurist                       │       13 │      13 │       0 │     0.0% │  ⏸️ Stalled    │
+│ upstream-institute-virtual-... │        1 │       1 │       0 │     0.0% │  ⏸️ Stalled    │
+│ hacking                        │        1 │       1 │       0 │     0.0% │  ⏸️ Stalled    │
+│ oslo.vmware                    │        4 │       4 │       0 │     0.0% │  ⏸️ Stalled    │
+│ etcd3gw                        │        3 │       3 │       0 │     0.0% │  ⏸️ Stalled    │
+│ cyborg                         │        4 │       4 │       0 │     0.0% │  ⏸️ Stalled    │
+│ octavia-lib                    │        7 │       7 │       0 │     0.0% │  ⏸️ Stalled    │
+│ oslo.reports                   │        5 │       5 │       0 │     0.0% │  ⏸️ Stalled    │
+│ charm-manila-ganesha           │        2 │       2 │       0 │     0.0% │  ⏸️ Stalled    │
+│ storlets                       │        7 │       7 │       0 │     0.0% │  ⏸️ Stalled    │
+│ auto-scaling-sig               │        1 │       1 │       0 │     0.0% │  ⏸️ Stalled    │
+│ neutron-dynamic-routing        │        4 │       4 │       0 │     0.0% │  ⏸️ Stalled    │
+│ octavia                        │        7 │       7 │       0 │     0.0% │  ⏸️ Stalled    │
+│ requirements                   │        2 │       2 │       0 │     0.0% │  ⏸️ Stalled    │
+│ ovn-bgp-agent                  │        1 │       1 │       0 │     0.0% │  ⏸️ Stalled    │
+│ ossa                           │        2 │       2 │       0 │     0.0% │  ⏸️ Stalled    │
+│ security-doc                   │        4 │       4 │       0 │     0.0% │  ⏸️ Stalled    │
+│ osops                          │       14 │      14 │       0 │     0.0% │  ⏸️ Stalled    │
+│ masakari                       │       26 │      26 │       0 │     0.0% │  ⏸️ Stalled    │
+│ project-config                 │        3 │       4 │      -1 │   -33.3% │ 📅 Deprecating │
+│ oslo.utils                     │       17 │      18 │      -1 │    -5.9% │ 📈 Regressed   │
+│ oslo.privsep                   │        9 │      10 │      -1 │   -11.1% │ 📈 Regressed   │
+│ tooz                           │        4 │       5 │      -1 │   -25.0% │ 📈 Regressed   │
+│ bifrost                        │        0 │       1 │      -1 │  -100.0% │ 🆕 New         │
+│ puppet-nova                    │        0 │       1 │      -1 │  -100.0% │ 🆕 New         │
+│ rally                          │        3 │       4 │      -1 │   -33.3% │ 📅 Deprecating │
+│ neutron-lib                    │        6 │       7 │      -1 │   -16.7% │ 📈 Regressed   │
+│ rally-openstack                │        0 │       1 │      -1 │  -100.0% │ 🆕 New         │
+│ masakari-monitors              │       27 │      29 │      -2 │    -7.4% │ 📈 Regressed   │
+│ oslo.cache                     │        7 │       9 │      -2 │   -28.6% │ 📈 Regressed   │
+│ swift                          │      250 │     252 │      -2 │    -0.8% │ 📈 Regressed   │
+│ releases                       │        1 │       4 │      -3 │  -300.0% │ 📈 Regressed   │
+│ networking-sfc                 │        3 │       8 │      -5 │  -166.7% │ 📈 Regressed   │
+│ openstack-helm                 │       35 │      43 │      -8 │   -22.9% │ 📈 Regressed   │
+│ openstack-manuals              │       23 │      34 │     -11 │   -47.8% │ 📈 Regressed   │
+│ watcher                        │       13 │      25 │     -12 │   -92.3% │ 📈 Regressed   │
+│ election                       │        5 │      19 │     -14 │  -280.0% │ 📅 Deprecating │
+│ oslo.service                   │       56 │      76 │     -20 │   -35.7% │ 📈 Regressed   │
+│ oslo.log                       │       22 │      49 │     -27 │  -122.7% │ 📈 Regressed   │
+╰────────────────────────────────┴──────────┴─────────┴─────────┴──────────┴────────────────╯
+
+🏆 Top Contributors (Most Usages Removed)
+🥇 neutron - 131 usages removed (79.9% progress)
+🥈 heat - 63 usages removed (100.0% progress)
+🥉 nova - 39 usages removed (40.2% progress)
+4. mistral - 35 usages removed (97.2% progress)
+5. ironic - 16 usages removed (57.1% progress)
+
+⚠️  Projects Needing Attention
+⏸️ openstack-ansible-ops - 10 usages, ⏸️ Stalled status
+⏸️ zun - 12 usages, ⏸️ Stalled status
+⏸️ tacker - 85 usages, ⏸️ Stalled status
+⏸️ cinder - 155 usages, ⏸️ Stalled status
+📈 masakari-monitors - 29 usages, 📈 Regressed status
+⏸️ blazar - 13 usages, ⏸️ Stalled status
+⏸️ taskflow - 24 usages, ⏸️ Stalled status
+⏸️ swift-bench - 13 usages, ⏸️ Stalled status
+📈 openstack-helm - 43 usages, 📈 Regressed status
+⏸️ venus - 22 usages, ⏸️ Stalled status
+📈 oslo.utils - 18 usages, 📈 Regressed status
+⏸️ futurist - 13 usages, ⏸️ Stalled status
+📈 oslo.privsep - 10 usages, 📈 Regressed status
+📈 openstack-manuals - 34 usages, 📈 Regressed status
+📈 oslo.log - 49 usages, 📈 Regressed status
+📈 watcher - 25 usages, 📈 Regressed status
+📈 oslo.service - 76 usages, 📈 Regressed status
+📈 swift - 252 usages, 📈 Regressed status
+⏸️ osops - 14 usages, ⏸️ Stalled status
+⏸️ masakari - 26 usages, ⏸️ Stalled status
