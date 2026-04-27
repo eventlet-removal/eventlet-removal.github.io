@@ -57,8 +57,11 @@ og_description: Comprehensive retrospective of Gazpacho achievements and roadmap
     <div class="mt-10">
         <h2 id="gazpacho-retrospective" class="text-3xl font-bold mb-6">Gazpacho Retrospective <a href="#gazpacho-retrospective" class="text-cyan-400 text-xl">🔗</a></h2>
         
+        <p class="text-xl mb-6">The Gazpacho cycle marked a period of significant progress in the eventlet removal initiative, with foundational work completed in core libraries and substantial advances across multiple OpenStack projects. The session began with updates from the eventlet library itself and Oslo services, which provide critical infrastructure for the broader migration effort.</p>
+        
         <div class="bg-indigo-900 p-6 rounded-lg shadow mt-4">
             <h3 class="text-2xl font-bold mb-4">Core Libraries Progress</h3>
+            <p class="text-lg mb-4">The core libraries that underpin OpenStack's concurrency infrastructure made important strides during Gazpacho, particularly in Python version compatibility and multiprocessing support:</p>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                 <div class="bg-green-800 p-6 rounded-lg">
@@ -92,7 +95,10 @@ og_description: Comprehensive retrospective of Gazpacho achievements and roadmap
     <div class="mt-10">
         <h2 id="project-progress" class="text-3xl font-bold mb-6">Project-by-Project Progress <a href="#project-progress" class="text-cyan-400 text-xl">🔗</a></h2>
         
+        <p class="text-xl mb-6">The Gazpacho cycle saw remarkable progress across the OpenStack project landscape, with three projects achieving complete migration away from eventlet and many others making substantial advances toward threading-based concurrency. The migration efforts varied in approach, with some projects opting for gradual service-by-service transitions while others pursued comprehensive migrations. This diversity in strategies has provided valuable lessons for the community.</p>
+        
         <h3 class="text-2xl font-bold mb-4 text-green-400">✅ Completed Migrations</h3>
+        <p class="text-xl mb-4">Three projects reached the significant milestone of completing their eventlet removal during the Gazpacho cycle, joining the ranks of earlier pioneers like Octavia, Mistral, and Ironic. These successes demonstrate that full migration is achievable across different types of OpenStack services:</p>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4 mb-8">
             <div class="bg-green-800 p-6 rounded-lg shadow">
@@ -125,7 +131,8 @@ og_description: Comprehensive retrospective of Gazpacho achievements and roadmap
             </div>
         </div>
         
-        <h3 class="text-2xl font-bold mb-4 text-yellow-400">🟢 Significant Progress</h3>
+        <h3 class="text-2xl font-bold mb-4 mt-8 text-yellow-400">🟢 Significant Progress</h3>
+        <p class="text-xl mb-4">Several major OpenStack projects have made substantial progress in their migrations, with many services already running in threading mode by default. These projects represent the bulk of the community's migration effort and are demonstrating various successful approaches to the transition. Nova's gradual service-by-service strategy and Manila's performance validation framework stand out as particularly valuable contributions:</p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <div class="bg-yellow-800 p-6 rounded-lg shadow">
@@ -197,6 +204,7 @@ og_description: Comprehensive retrospective of Gazpacho achievements and roadmap
         </div>
         
         <h3 class="text-2xl font-bold mb-4 mt-8 text-orange-400">🟡 In Progress</h3>
+        <p class="text-xl mb-4">Swift continues its migration journey with impressive test coverage already achieved. The project faces unique technical challenges related to erasure coding that require careful consideration of concurrency behavior. The team is working through these challenges systematically while maintaining the high reliability standards Swift operators expect:</p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <div class="bg-orange-800 p-6 rounded-lg shadow">
@@ -218,8 +226,11 @@ og_description: Comprehensive retrospective of Gazpacho achievements and roadmap
     <div class="mt-10">
         <h2 id="hibiscus-action" class="text-3xl font-bold mb-6">Call to Action for Hibiscus <a href="#hibiscus-action" class="text-cyan-400 text-xl">🔗</a></h2>
         
+        <p class="text-xl mb-6">Building on the momentum established during Gazpacho, the Hibiscus cycle represents a critical phase in the eventlet removal initiative. The focus shifts from initial migration work to defaulting projects to threading mode, expanding test coverage to include Python 3.14, and addressing remaining technical blockers. The community has identified five primary goals that will guide the work throughout this cycle, along with a clear migration timeline strategy that balances progress with stability.</p>
+        
         <div class="bg-indigo-900 p-6 rounded-lg shadow mt-4">
             <h3 class="text-2xl font-bold mb-4">Primary Goals</h3>
+            <p class="text-lg mb-4">The Hibiscus cycle work is organized around five interconnected objectives that address technical migration, testing infrastructure, library cleanup, and operator guidance:</p>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                 <div class="bg-blue-800 p-6 rounded-lg">
@@ -271,6 +282,7 @@ og_description: Comprehensive retrospective of Gazpacho achievements and roadmap
         
         <div class="bg-indigo-900 p-6 rounded-lg shadow mt-6">
             <h3 class="text-2xl font-bold mb-4">Example Migration Timeline</h3>
+            <p class="text-lg mb-4">The recommended approach to migration follows a three-release pattern that allows for gradual adoption while maintaining stability for operators. This strategy provides a fallback mechanism during the transition period and gives operators time to adapt their deployments. Here's how Nova is applying this pattern to their console proxy services:</p>
             <div class="bg-gray-800 p-4 rounded">
                 <p class="mb-2"><strong>Nova Console Proxies:</strong></p>
                 <ul class="list-disc pl-6 space-y-1">
@@ -287,7 +299,10 @@ og_description: Comprehensive retrospective of Gazpacho achievements and roadmap
     <div class="mt-10">
         <h2 id="concerns" class="text-3xl font-bold mb-6">Concerns and Noticed Problems <a href="#concerns" class="text-cyan-400 text-xl">🔗</a></h2>
         
+        <p class="text-xl mb-6">While significant progress has been made, the PTG session identified several technical challenges that require attention during the Hibiscus cycle and beyond. These issues range from critical blockers that could affect Python version compatibility to medium-priority concerns about library dependencies and testing infrastructure. Understanding and addressing these challenges is essential for maintaining the migration timeline and ensuring stable deployments.</p>
+        
         <h3 class="text-2xl font-bold mb-4 text-red-400">🔴 Critical Issues</h3>
+        <p class="text-xl mb-4">Three critical issues emerged that require immediate attention. These problems have the potential to block progress on Python version upgrades or affect multiple projects simultaneously. The community is actively working on solutions, but these challenges represent the highest priority concerns for the Hibiscus cycle:</p>
         
         <div class="grid grid-cols-1 gap-6 mt-4">
             <div class="bg-red-900 p-6 rounded-lg shadow">
@@ -365,6 +380,7 @@ og_description: Comprehensive retrospective of Gazpacho achievements and roadmap
         </div>
         
         <h3 class="text-2xl font-bold mb-4 mt-8 text-yellow-400">🟡 Medium Priority Issues</h3>
+        <p class="text-xl mb-4">Beyond the critical blockers, several medium-priority issues were identified that affect code quality, test coverage, and operator experience. While these don't immediately block the migration, they represent technical debt that should be addressed to ensure a smooth transition and maintain long-term code maintainability:</p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <div class="bg-yellow-800 p-6 rounded-lg shadow">
@@ -418,6 +434,7 @@ og_description: Comprehensive retrospective of Gazpacho achievements and roadmap
         </div>
         
         <h3 class="text-2xl font-bold mb-4 mt-8 text-purple-400">🟣 Architectural Concerns</h3>
+        <p class="text-xl mb-4">Looking beyond immediate technical issues, the community discussed longer-term architectural questions about the future of concurrency in OpenStack. These concerns don't require immediate action but represent important strategic considerations that will shape the project's evolution after eventlet is fully removed:</p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <div class="bg-purple-900 p-6 rounded-lg shadow">
@@ -458,6 +475,8 @@ og_description: Comprehensive retrospective of Gazpacho achievements and roadmap
 <section>
     <div class="mt-10">
         <h2 id="performance" class="text-3xl font-bold mb-6">Performance Testing Insights <a href="#performance" class="text-cyan-400 text-xl">🔗</a></h2>
+        
+        <p class="text-xl mb-6">One of the most significant achievements during the Gazpacho cycle was the development of performance testing frameworks that provide concrete data about the impact of migrating from eventlet to native threading. These insights have been crucial in building confidence that the migration can be completed without significant performance degradation. Different projects have encountered varying challenges based on their specific workload characteristics and architectural patterns.</p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <div class="bg-indigo-900 p-6 rounded-lg shadow">
@@ -501,6 +520,8 @@ og_description: Comprehensive retrospective of Gazpacho achievements and roadmap
 <section>
     <div class="mt-10">
         <h2 id="achievements" class="text-3xl font-bold mb-6">Notable Achievements <a href="#achievements" class="text-cyan-400 text-xl">🔗</a></h2>
+        
+        <p class="text-xl mb-6">The Gazpacho cycle delivered several significant milestones that demonstrate the viability and momentum of the eventlet removal initiative. These achievements span complete project migrations, successful default switching to threading mode, development of reusable testing infrastructure, and validation of performance parity. The successes provide both concrete progress and valuable lessons that benefit the entire community.</p>
         
         <div class="bg-gradient-to-r from-green-900 to-blue-900 p-6 rounded-lg shadow">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -561,6 +582,8 @@ og_description: Comprehensive retrospective of Gazpacho achievements and roadmap
     <div class="mt-10">
         <h2 id="next-steps" class="text-3xl font-bold mb-6">Next Steps Summary <a href="#next-steps" class="text-cyan-400 text-xl">🔗</a></h2>
         
+        <p class="text-xl mb-6">The eventlet removal initiative follows a phased timeline that balances aggressive progress with operational stability. The roadmap is organized into three time horizons: immediate actions for the Hibiscus cycle, medium-term objectives targeting the 2027.1 release, and long-term goals for 2027.2 and beyond. This structured approach ensures that the community maintains momentum while giving operators adequate time to adapt their deployments and providing fallback options during the transition.</p>
+        
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
             <div class="bg-blue-900 p-6 rounded-lg shadow">
                 <h3 class="text-2xl font-bold mb-4">Immediate (Hibiscus Cycle)</h3>
@@ -601,6 +624,8 @@ og_description: Comprehensive retrospective of Gazpacho achievements and roadmap
     <div class="mt-10">
         <h2 class="text-3xl font-bold mb-6">Resources</h2>
         
+        <p class="text-xl mb-6">The eventlet removal initiative maintains several resources to support contributors and track progress. These include session recordings and notes from PTG discussions, official documentation and governance materials, and development tracking tools. The community encourages all stakeholders to engage through these channels to stay informed and contribute to the effort.</p>
+        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-indigo-900 p-6 rounded-lg shadow">
                 <h3 class="text-2xl font-bold mb-3">Session Materials</h3>
@@ -628,7 +653,7 @@ og_description: Comprehensive retrospective of Gazpacho achievements and roadmap
         <h2 class="text-3xl font-bold mb-6">Conclusion</h2>
         
         <div class="bg-indigo-900 p-6 rounded-lg shadow">
-            <p class="text-xl mb-4">The Gazpacho cycle demonstrated significant progress across the OpenStack ecosystem in removing eventlet dependencies. With two projects fully migrated (Designate, Neutron), one completely eventlet-free (Cyborg), and major advances in Nova, Manila, Watcher, and others, the community has established clear momentum.</p>
+            <p class="text-xl mb-4">The Gazpacho cycle demonstrated significant progress across the OpenStack ecosystem in removing eventlet dependencies. With three projects fully migrated (Designate, Neutron, and Cyborg) and major advances in Nova, Manila, Watcher, and others, the community has established clear momentum. The completion of these migrations proves that the initiative is technically feasible and provides concrete examples for other projects to follow.</p>
             
             <p class="text-xl mb-4">The development of reusable testing infrastructure, particularly Manila's Rally comparison framework showing performance parity, provides confidence that this transition can be achieved without significant performance degradation. Nova's gradual service-by-service approach and Watcher's successful switch to threading by default in Hibiscus demonstrate multiple viable migration strategies.</p>
             
