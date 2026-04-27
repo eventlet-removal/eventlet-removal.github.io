@@ -194,12 +194,12 @@ og_description: Track OpenStack's community-wide effort to migrate away from Eve
             <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/swift" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
           </td>
         </tr>
-        
-        <!-- Projects in Planning Phase -->
         <tr>
           <td class="py-2 px-4 border-b border-gray-700">Blazar</td>
-          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-yellow-800 rounded px-2 py-1">Planning</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Evaluating alternatives to Eventlet WSGI</td>
+          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
+          <td class="py-2 px-4 border-b border-gray-700">Evaluating alternatives to Eventlet WSGI, gradual transition approach
+            <a href="https://review.opendev.org/q/prefixtopic:eventlet-removal+project:openstack/blazar" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
         </tr>
       </tbody>
     </table>
