@@ -48,7 +48,7 @@ og_description: Detailed step-by-step instructions for refactoring Eventlet code
     <ol class="mt-10 text-xl list-decimal list-inside">
         <li><strong>Activate the AsyncIO hub in Eventlet:</strong> Begin by switching to Eventlet's AsyncIO hub to enable compatibility with AsyncIO code.
             <pre class="line-numbers mt-4 ml-6"><code class="language-python">import eventlet
-eventlet.use_hub('asyncio')
+eventlet.hubs.use_hub('asyncio')
 # If you use monkey patching, place it after hub activation
 eventlet.monkey_patch()</code></pre>
             <p class="mt-2 ml-6">This critical first step allows you to gradually introduce AsyncIO code while maintaining compatibility with existing Eventlet code. For more details, refer to the <a href="https://eventlet.readthedocs.io/en/latest/asyncio/migration.html#step-1-switch-to-the-asyncio-hub" class="text-cyan-400" target="_blank">official Eventlet documentation</a>.</p>
