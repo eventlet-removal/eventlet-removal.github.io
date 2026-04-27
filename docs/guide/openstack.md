@@ -49,6 +49,7 @@ og_description: Track OpenStack's community-wide effort to migrate away from Eve
       The OpenStack Project Teams Gathering (PTG) events have featured significant discussions about Eventlet removal. Explore the documentation from these sessions to understand the community's approach and progress.
     </p>
     <ul class="mt-4 list-disc pl-6">
+      <li><a href="{{ site.baseurl }}{% link guide/openstack/hibiscus-ptg.md %}" class="text-cyan-400 hover:underline">Hibiscus PTG (April 2026): Gazpacho Retrospective & Hibiscus Call to Action</a></li>
       <li><a href="{{ site.baseurl }}{% link guide/openstack/flamingo.md %}" class="text-cyan-400 hover:underline">Flamingo PTG (April 2025): Eventlet Discussions</a></li>
     </ul>
     <p class="mt-4 text-gray-400 italic">Updates from future PTGs will be added here</p>
@@ -73,7 +74,7 @@ og_description: Track OpenStack's community-wide effort to migrate away from Eve
 <div class="mt-10 bg-indigo-900 bg-opacity-50 p-6 rounded-lg">
   <h2 id="migration-status" class="text-2xl font-bold mb-4">Current Migration Status Summary <a href="#migration-status" class="text-cyan-400 text-xl">🔗</a></h2>
   <p class="text-xl mb-6">
-    The progress of Eventlet removal varies across OpenStack projects. Here's a high-level overview as of September 2025:
+    The progress of Eventlet removal varies across OpenStack projects. Here's a high-level overview as of April 2026 (Hibiscus cycle):
   </p>
   
   <div class="overflow-x-auto">
@@ -122,67 +123,74 @@ og_description: Track OpenStack's community-wide effort to migrate away from Eve
             <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/heat" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
           </td>
         </tr>
-        <!-- Projects In Progress -->
+        <tr>
+          <td class="py-2 px-4 border-b border-gray-700">Cyborg</td>
+          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-green-800 rounded px-2 py-1">Completed</span></td>
+          <td class="py-2 px-4 border-b border-gray-700">Eventlet-free since Gazpacho. Removed monkey patch, fixed DB deadlock, native WSGI server removed
+            <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/cyborg" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
+        </tr>
         <tr>
           <td class="py-2 px-4 border-b border-gray-700">Neutron</td>
-          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Dual-mode support during transition
+          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-green-800 rounded px-2 py-1">Completed</span></td>
+          <td class="py-2 px-4 border-b border-gray-700">Migration completed in Gazpacho. Moved Oslo services to threading mode, removed all eventlet imports
             <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/neutron" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
           </td>
         </tr>
         <tr>
+          <td class="py-2 px-4 border-b border-gray-700">Designate</td>
+          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-green-800 rounded px-2 py-1">Completed</span></td>
+          <td class="py-2 px-4 border-b border-gray-700">Migration completed in Gazpacho. Full migration finished, major milestone achieved
+            <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/designate" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
+          </td>
+        </tr>
+        <!-- Projects In Progress -->
+        <tr>
           <td class="py-2 px-4 border-b border-gray-700">Oslo Libraries</td>
           <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Deprecated Eventlet features, oslo.db supports asyncio, oslo.service's threading backend is implemented
+          <td class="py-2 px-4 border-b border-gray-700">Multiprocessing spawn support introduced, deprecated Eventlet features, oslo.db supports asyncio, oslo.service's threading backend implemented. Working on making eventlet dependencies optional
             <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+oslo" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
           </td>
         </tr>
         <tr>
           <td class="py-2 px-4 border-b border-gray-700">Glance</td>
           <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Core works without Eventlet; some optional features still depend on it
+          <td class="py-2 px-4 border-b border-gray-700">Good shape. Removed eventlet from utils, unit tests use native threading. Client migration pending
             <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/glance" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
           </td>
         </tr>
         <tr>
           <td class="py-2 px-4 border-b border-gray-700">Nova</td>
           <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Service-by-service approach with dual-mode support
+          <td class="py-2 px-4 border-b border-gray-700">Service-by-service approach. Gazpacho: API, metadata, scheduler default to threading. Hibiscus: compute and conductor default to threading. Pending: console proxies
             <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/nova" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
           </td>
         </tr>
         <tr>
           <td class="py-2 px-4 border-b border-gray-700">Cinder</td>
           <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Starting with Volume Manager, then other components
+          <td class="py-2 px-4 border-b border-gray-700">Volume and scheduler services operational with threading, aligned with recent Oslo services. Backup service in progress
             <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/cinder" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
           </td>
         </tr>
         <tr>
           <td class="py-2 px-4 border-b border-gray-700">Manila</td>
           <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Multi-cycle approach, targeting completion in Guppy cycle
+          <td class="py-2 px-4 border-b border-gray-700">Advanced progress. Share manager migrated, Rally performance framework developed showing no significant regression. Planning functional tests for Hibiscus
             <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/manila" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
-          </td>
-        </tr>
-        <tr>
-          <td class="py-2 px-4 border-b border-gray-700">Designate</td>
-          <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Top priority for Flamingo cycle
-            <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/designate" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
           </td>
         </tr>
         <tr>
           <td class="py-2 px-4 border-b border-gray-700">Watcher</td>
           <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">Support running under threading mode
+          <td class="py-2 px-4 border-b border-gray-700">All components migrated (API, Decision Engine, Applier). Switched to threading by default in early Hibiscus
             <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/watcher" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
           </td>
         </tr>
         <tr>
           <td class="py-2 px-4 border-b border-gray-700">Swift</td>
           <td class="py-2 px-4 border-b border-gray-700"><span class="bg-purple-800 rounded px-2 py-1">In Progress</span></td>
-          <td class="py-2 px-4 border-b border-gray-700">"Canary node" approach starting with proxies
+          <td class="py-2 px-4 border-b border-gray-700">100% functional tests passing, 99% unit tests passing. Working on erasure coding predictability challenges
             <a href="https://review.opendev.org/q/prefixtopic:%22eventlet-removal%22+project:openstack/swift" class="text-cyan-400 hover:underline" target="_blank">Show the migration history</a>
           </td>
         </tr>
