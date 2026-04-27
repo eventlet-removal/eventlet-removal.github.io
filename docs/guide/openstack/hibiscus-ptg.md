@@ -18,19 +18,20 @@ og_description: Comprehensive retrospective of Gazpacho achievements and roadmap
 
     <div class="mt-6 mb-6">
         <h2 class="text-2xl font-bold mb-4">Session Recording</h2>
-        <div class="aspect-w-16 aspect-h-9 bg-gray-900 rounded-lg overflow-hidden shadow-lg">
-            <iframe 
-                width="100%" 
-                height="500" 
-                src="https://www.youtube.com/embed/dDgUdKPRNZU" 
-                title="OpenStack Eventlet Removal Office Hours - Hibiscus PTG" 
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen
-                class="rounded-lg">
-            </iframe>
+        <div class="max-w-4xl mx-auto">
+            <div class="relative" style="padding-bottom: 56.25%; height: 0; overflow: hidden;">
+                <iframe 
+                    src="https://www.youtube.com/embed/dDgUdKPRNZU" 
+                    title="OpenStack Eventlet Removal Office Hours - Hibiscus PTG" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen
+                    class="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg"
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                </iframe>
+            </div>
         </div>
-        <p class="mt-4 text-lg">
+        <p class="mt-4 text-lg text-center">
             <strong>Resources:</strong> 
             <a href="https://etherpad.opendev.org/p/openstack-eventlet-removal" class="text-cyan-400 hover:underline" target="_blank">Session Etherpad</a>
         </p>
