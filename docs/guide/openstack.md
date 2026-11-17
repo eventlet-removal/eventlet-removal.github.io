@@ -49,6 +49,7 @@ og_description: Track OpenStack's community-wide effort to migrate away from Eve
       The OpenStack Project Teams Gathering (PTG) events have featured significant discussions about Eventlet removal. Explore the documentation from these sessions to understand the community's approach and progress.
     </p>
     <ul class="mt-4 list-disc pl-6">
+      <li><a href="{{ site.baseurl }}{% link guide/openstack/indri-ptg.md %}" class="text-cyan-400 hover:underline">Indri PTG (October 2026): Hibiscus Retrospective &amp; Indri Priorities</a></li>
       <li><a href="{{ site.baseurl }}{% link guide/openstack/hibiscus-ptg.md %}" class="text-cyan-400 hover:underline">Hibiscus PTG (April 2026): Gazpacho Retrospective & Hibiscus Call to Action</a></li>
       <li><a href="{{ site.baseurl }}{% link guide/openstack/flamingo.md %}" class="text-cyan-400 hover:underline">Flamingo PTG (April 2025): Eventlet Discussions</a></li>
     </ul>
